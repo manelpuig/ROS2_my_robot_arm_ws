@@ -18,26 +18,27 @@ def generate_launch_description():
     rviz_path = os.path.join(desc_share, "rviz", "my_arm.rviz")
     controllers_yaml = os.path.join(gz_share, "config", "gz_controllers.yaml")
 
+    # Force robot_description to be treated as a plain string (avoid YAML parsing)
     robot_description = ParameterValue(
         Command(["xacro ", xacro_path]),
         value_type=str
     )
-    # Gazebo Sim (ros_gz_sim provides gz_sim.launch.py; here we call gz directly for clarity)
-    # Alternative: ros2 launch ros_gz_sim gz_sim.launch.py gz_args:=...
+
+    # Start Gazebo Sim
     gz = ExecuteProcess(
         cmd=["ros2", "launch", "ros_gz_sim", "gz_sim.launch.py", f"gz_args:={world_path} -r"],
         output="screen",
     )
 
-    # Robot State Publisher for TF in ROS side (useful for RViz)
+    # Robot State Publisher (TF for RViz + robot_description param)
     rsp = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
-        parameters=[robot_description],
+        parameters=[{"robot_description": robot_description}],
         output="screen",
     )
 
-    # Spawn entity into Gazebo from robot_description
+    # Spawn entity into Gazebo from the /robot_description topic published by robot_state_publisher
     spawn = Node(
         package="ros_gz_sim",
         executable="create",
@@ -57,21 +58,27 @@ def generate_launch_description():
         output="screen",
     )
 
-    # Spawn controllers (controller_manager is created by gz_ros2_control plugin inside Gazebo)
-    # Delay a bit to let the entity + controller_manager come up.
+    # Spawn controllers (gz_ros2_control creates /controller_manager inside Gazebo)
+    # Use -p to pass the controller YAML.
     spawner_jsb = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
-        parameters=[controllers_yaml],
+        arguments=[
+            "joint_state_broadcaster",
+            "--controller-manager", "/controller_manager",
+            "-p", controllers_yaml,
+        ],
         output="screen",
     )
 
     spawner_arm = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["arm_controller", "--controller-manager", "/controller_manager"],
-        parameters=[controllers_yaml],
+        arguments=[
+            "arm_controller",
+            "--controller-manager", "/controller_manager",
+            "-p", controllers_yaml,
+        ],
         output="screen",
     )
 
