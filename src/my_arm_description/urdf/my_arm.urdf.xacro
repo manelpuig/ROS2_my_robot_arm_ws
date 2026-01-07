@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="my_arm">
+
+  <!-- ========= Parameters ========= -->
+  <xacro:property name="l1" value="0.060"/>
+  <xacro:property name="l2" value="0.090"/>
+  <xacro:property name="l3" value="0.090"/>
+  <xacro:property name="l4" value="0.070"/>
+  <xacro:property name="l5" value="0.060"/>
+  <xacro:property name="l6" value="0.050"/>
+  <xacro:property name="radius" value="0.015"/>
+
+  <!-- Joint limits (radians) -->
+  <xacro:property name="j1_lower" value="${-3.14}"/>
+  <xacro:property name="j1_upper" value="${ 3.14}"/>
+  <xacro:property name="j2_lower" value="${-1.57}"/>
+  <xacro:property name="j2_upper" value="${ 1.57}"/>
+  <xacro:property name="j3_lower" value="${-1.57}"/>
+  <xacro:property name="j3_upper" value="${ 1.57}"/>
+  <xacro:property name="j4_lower" value="${-3.14}"/>
+  <xacro:property name="j4_upper" value="${ 3.14}"/>
+  <xacro:property name="j5_lower" value="${-1.57}"/>
+  <xacro:property name="j5_upper" value="${ 1.57}"/>
+  <xacro:property name="j6_lower" value="${-3.14}"/>
+  <xacro:property name="j6_upper" value="${ 3.14}"/>
+
+  <!-- ========= Helpers ========= -->
+  <xacro:macro name="simple_cylinder_link" params="link_name length radius mass">
+    <link name="${link_name}">
+      <inertial>
+        <origin xyz="0 0 ${length/2.0}" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <!-- Rough inertia: OK to start; refine later if needed -->
+        <inertia ixx="1e-4" ixy="0" ixz="0" iyy="1e-4" iyz="0" izz="1e-4"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 0 ${length/2.0}" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="${length}" radius="${radius}"/>
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 ${length/2.0}" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="${length}" radius="${radius}"/>
+        </geometry>
+      </collision>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="revolute_joint" params="joint_name parent child xyz rpy axis lower upper">
+    <joint name="${joint_name}" type="revolute">
+      <parent link="${parent}"/>
+      <child link="${child}"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <axis xyz="${axis}"/>
+      <limit lower="${lower}" upper="${upper}" effort="2.0" velocity="2.0"/>
+      <!-- Damping helps stability in physics sims -->
+      <dynamics damping="0.2" friction="0.0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- ========= Links ========= -->
+  <link name="base_link"/>
+  <xacro:simple_cylinder_link link_name="link1" length="${l1}" radius="${radius}" mass="0.2"/>
+  <xacro:simple_cylinder_link link_name="link2" length="${l2}" radius="${radius}" mass="0.2"/>
+  <xacro:simple_cylinder_link link_name="link3" length="${l3}" radius="${radius}" mass="0.2"/>
+  <xacro:simple_cylinder_link link_name="link4" length="${l4}" radius="${radius}" mass="0.15"/>
+  <xacro:simple_cylinder_link link_name="link5" length="${l5}" radius="${radius}" mass="0.10"/>
+  <xacro:simple_cylinder_link link_name="link6" length="${l6}" radius="${radius}" mass="0.10"/>
+  <link name="tool0"/>
+
+  <!-- ========= Kinematic chain ========= -->
+  <xacro:revolute_joint joint_name="joint1" parent="base_link" child="link1"
+                        xyz="0 0 0" rpy="0 0 0" axis="0 0 1"
+                        lower="${j1_lower}" upper="${j1_upper}"/>
+
+  <xacro:revolute_joint joint_name="joint2" parent="link1" child="link2"
+                        xyz="0 0 ${l1}" rpy="0 0 0" axis="0 1 0"
+                        lower="${j2_lower}" upper="${j2_upper}"/>
+
+  <xacro:revolute_joint joint_name="joint3" parent="link2" child="link3"
+                        xyz="0 0 ${l2}" rpy="0 0 0" axis="0 1 0"
+                        lower="${j3_lower}" upper="${j3_upper}"/>
+
+  <xacro:revolute_joint joint_name="joint4" parent="link3" child="link4"
+                        xyz="0 0 ${l3}" rpy="0 0 0" axis="1 0 0"
+                        lower="${j4_lower}" upper="${j4_upper}"/>
+
+  <xacro:revolute_joint joint_name="joint5" parent="link4" child="link5"
+                        xyz="0 0 ${l4}" rpy="0 0 0" axis="0 1 0"
+                        lower="${j5_lower}" upper="${j5_upper}"/>
+
+  <xacro:revolute_joint joint_name="joint6" parent="link5" child="link6"
+                        xyz="0 0 ${l5}" rpy="0 0 0" axis="1 0 0"
+                        lower="${j6_lower}" upper="${j6_upper}"/>
+
+  <joint name="tool0_fixed" type="fixed">
+    <parent link="link6"/>
+    <child link="tool0"/>
+    <origin xyz="0 0 ${l6}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- =========================================================
+       ros2_control: required for Gazebo Sim + gz_ros2_control
+       ========================================================= -->
+  <ros2_control name="MyArmSystem" type="system">
+    <hardware>
+      <!-- Gazebo Sim system plugin -->
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+
+    <!-- Expose command/state interfaces for each joint -->
+    <joint name="joint1">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint2">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint3">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint4">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint5">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint6">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+  <!-- Gazebo Sim plugin to load ros2_control controller_manager inside Gazebo -->
+  <gazebo>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin"/>
+  </gazebo>
+
+</robot>

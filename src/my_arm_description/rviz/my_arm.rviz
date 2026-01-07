@@ -1,0 +1,50 @@
+Panels:
+  - Class: rviz_common/Displays
+    Help Height: 78
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /RobotModel1
+        - /TF1
+      Splitter Ratio: 0.5
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Cell Size: 0.1
+      Plane: XY
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel1
+      Robot Description: robot_description
+    - Class: rviz_default_plugins/TF
+      Name: TF1
+      Frame Timeout: 15.0
+      Show Axes: true
+      Show Names: false
+  Enabled: true
+  Global Options:
+    Fixed Frame: base_link
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+    - Class: rviz_default_plugins/SetInitialPose
+    - Class: rviz_default_plugins/SetGoal
+  Value: true
+Views:
+  Current:
+    Class: rviz_default_plugins/Orbit
+    Distance: 1.2
+    Focal Point:
+      X: 0.0
+      Y: 0.0
+      Z: 0.2
+    Pitch: 0.5
+    Yaw: 0.7

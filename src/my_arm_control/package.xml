@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>my_arm_control</name>
+  <version>0.0.1</version>
+  <description>Serial bridge and joint_state estimator for a 6DOF servo arm.</description>
+  <maintainer email="you@todo.todo">you</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>xacro</exec_depend>
+</package>

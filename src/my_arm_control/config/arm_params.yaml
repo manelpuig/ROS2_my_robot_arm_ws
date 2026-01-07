@@ -1,0 +1,13 @@
+serial_bridge:
+  ros__parameters:
+    port: "/dev/ttyUSB0"
+    baud: 115200
+    write_rate_hz: 50.0
+    joint_names: ["joint1","joint2","joint3","joint4","joint5","joint6"]
+    mode: "angles_rad"   # send angles in radians (recommended)
+    line_prefix: "J:"    # e.g. J:0.10,-1.57,...
+
+joint_state_estimator:
+  ros__parameters:
+    publish_rate_hz: 50.0
+    joint_names: ["joint1","joint2","joint3","joint4","joint5","joint6"]
