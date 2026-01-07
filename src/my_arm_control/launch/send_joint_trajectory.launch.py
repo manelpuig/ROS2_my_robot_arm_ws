@@ -11,7 +11,7 @@ def generate_launch_description():
 
     node = Node(
         package="my_arm_control",
-        executable="send_joint_trajectory",
+        executable="send_joint_trajectory_exe",
         name="send_joint_trajectory",
         output="screen",
         parameters=[params_file],
