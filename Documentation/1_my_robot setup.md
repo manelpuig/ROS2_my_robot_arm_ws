@@ -182,33 +182,21 @@ This package defines **how ROS talks to the real arm**.
 
 ---
 
-## Learning Path for Students
+## Repository setup
 
-1. **Start with **``
+Clone your project:
+````shel
+cd /root/
+git clone https://github.com/manelpuig/ROS2_my_robot_arm_ws.git
+cd ROS2_my_robot_arm_ws
+colcon build --symlink-install --merge-install
+source install/setup.bash
+````
+Add these lines in `.bashrc`:
+````shell
+source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash
+source /root/ROS2_my_robot_arm_ws/install/setup.bash
+cd /root/ROS2_my_robot_arm_ws
+````
 
-   - Understand URDF/Xacro
-   - Modify link lengths and joint limits
-
-2. **Run **``
-
-   - Observe physics and joint motion
-   - Send joint trajectories
-
-3. **Study **``
-
-   - Understand how ROS commands reach real hardware
-   - Learn serial protocols and abstraction layers
-
-4. *(Optional, later)* Add MoveIt2 for planning
-
----
-
-## Design Philosophy
-
-- One responsibility per package
-- Same URDF for simulation and real robot
-- Simple, readable Python nodes
-- No hidden magic
-
-This structure mirrors how industrial ROS systems are organized, while remaining accessible for teaching and experimentation.
 
