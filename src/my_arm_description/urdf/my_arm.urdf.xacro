@@ -70,6 +70,15 @@
   <!-- =========================
        Links
        ========================= -->
+  <!-- Dummy root link (no inertia) to keep KDL happy -->
+  <link name="world"/>
+
+  <joint name="world_to_base" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
   <link name="base_link">
     <visual>
       <origin xyz="0 0 ${$(arg base_z)/2.0}" rpy="0 0 0"/>
@@ -242,7 +251,7 @@
   <gazebo>
     <plugin name="ign_ros2_control::IgnitionROS2ControlPlugin"
             filename="libign_ros2_control-system.so">
-      <parameters>${ros2_control_params}</parameters>
+      <parameters>$(arg ros2_control_params)</parameters>
     </plugin>
   </gazebo> 
   <!-- For Gazebo Sim (ROS 2 Iron/Jazzy)

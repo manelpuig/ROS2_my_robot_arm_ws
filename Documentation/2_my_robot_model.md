@@ -11,3 +11,4 @@ ros2 launch my_arm_description display.launch.py
 ````shell
 ros2 launch my_arm_gz gz_sim.launch.py
 ````
+![](./Images/my_arm_gz.png)

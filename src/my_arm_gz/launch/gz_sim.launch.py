@@ -21,10 +21,10 @@ def generate_launch_description():
     # Force robot_description to be treated as a plain string (avoid YAML parsing)
     robot_description = ParameterValue(
         Command([
-            "xacro ", xacro_path,
-            " ros2_control_params:=", controllers_yaml
+            "xacro", " ", xacro_path, " ",
+            "ros2_control_params:=", controllers_yaml
         ]),
-        value_type=str
+        value_type=str,
     )
 
     # Start Gazebo Sim
@@ -66,22 +66,14 @@ def generate_launch_description():
     spawner_jsb = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=[
-            "joint_state_broadcaster",
-            "--controller-manager", "/controller_manager",
-            "-p", controllers_yaml,
-        ],
+        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
         output="screen",
     )
 
     spawner_arm = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=[
-            "arm_controller",
-            "--controller-manager", "/controller_manager",
-            "-p", controllers_yaml,
-        ],
+        arguments=["arm_controller", "--controller-manager", "/controller_manager"],
         output="screen",
     )
 
