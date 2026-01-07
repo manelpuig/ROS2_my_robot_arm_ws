@@ -6,3 +6,8 @@ Once you have created a model you can:
 ros2 launch my_arm_description display.launch.py
 ````
 ![](./Images/my_arm_rviz.png)
+
+- Bringup the robot arm in Gazebo sim:
+````shell
+ros2 launch my_arm_gz gz_sim.launch.py
+````

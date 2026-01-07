@@ -6,6 +6,7 @@ from launch import LaunchDescription
 from launch.actions import ExecuteProcess, TimerAction
 from launch.substitutions import Command
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -17,8 +18,10 @@ def generate_launch_description():
     rviz_path = os.path.join(desc_share, "rviz", "my_arm.rviz")
     controllers_yaml = os.path.join(gz_share, "config", "gz_controllers.yaml")
 
-    robot_description = {"robot_description": Command(["xacro ", xacro_path])}
-
+    robot_description = ParameterValue(
+        Command(["xacro ", xacro_path]),
+        value_type=str
+    )
     # Gazebo Sim (ros_gz_sim provides gz_sim.launch.py; here we call gz directly for clarity)
     # Alternative: ros2 launch ros_gz_sim gz_sim.launch.py gz_args:=...
     gz = ExecuteProcess(
