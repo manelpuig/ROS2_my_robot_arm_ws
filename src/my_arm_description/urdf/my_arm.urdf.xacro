@@ -238,9 +238,9 @@
   <!-- Gazebo plugin hook (gz_ros2_control reads the <ros2_control> block) -->
   <!-- For Ignition Gazebo (ROS 2 Humble) -->
   <gazebo>
-    <plugin name="ign_ros2_control" filename="libign_ros2_control-system.so"/>
+    <plugin name="ign_ros2_control::IgnitionROS2ControlPlugin"
+            filename="libign_ros2_control-system.so"/>
   </gazebo>
-
   <!-- For Gazebo Sim (ROS 2 Iron/Jazzy)
   <gazebo>
     <plugin name="gz_ros2_control" filename="libgz_ros2_control-system.so"/>

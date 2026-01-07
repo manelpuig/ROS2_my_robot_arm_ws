@@ -203,6 +203,8 @@ cd /root/ROS2_my_robot_arm_ws
 if [ -f /root/ROS2_my_robot_arm_ws/install/setup.bash ]; then
   source /root/ROS2_my_robot_arm_ws/install/setup.bash
 fi
+export IGN_GAZEBO_SYSTEM_PLUGIN_PATH=/opt/ros/humble/lib:${IGN_GAZEBO_SYSTEM_PLUGIN_PATH}
+export GZ_SIM_SYSTEM_PLUGIN_PATH=/opt/ros/humble/lib:${GZ_SIM_SYSTEM_PLUGIN_PATH}
 ````
 
 If you need to reinstall the ws:
