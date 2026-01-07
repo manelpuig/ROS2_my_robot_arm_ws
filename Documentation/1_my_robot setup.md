@@ -189,14 +189,21 @@ Clone your project:
 cd /root/
 git clone https://github.com/manelpuig/ROS2_my_robot_arm_ws.git
 cd ROS2_my_robot_arm_ws
+unset AMENT_PREFIX_PATH COLCON_PREFIX_PATH CMAKE_PREFIX_PATH
+source /opt/ros/humble/setup.bash
+rm -rf build install log
 colcon build --symlink-install --merge-install
 source install/setup.bash
 ````
 Add these lines in `.bashrc`:
 ````shell
 source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash
-source /root/ROS2_my_robot_arm_ws/install/setup.bash
+#source /root/ROS2_my_robot_arm_ws/install/setup.bash
 cd /root/ROS2_my_robot_arm_ws
+# Project overlay (only if built)
+if [ -f /root/ROS2_my_robot_arm_ws/install/setup.bash ]; then
+  source /root/ROS2_my_robot_arm_ws/install/setup.bash
+fi
 ````
 
 
