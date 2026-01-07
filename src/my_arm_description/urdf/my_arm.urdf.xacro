@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="my_arm">
 
+<xacro:arg name="ros2_control_params" default=""/>
+
   <!-- =========================
        Parameters (edit here)
        ========================= -->
@@ -239,8 +241,10 @@
   <!-- For Ignition Gazebo (ROS 2 Humble) -->
   <gazebo>
     <plugin name="ign_ros2_control::IgnitionROS2ControlPlugin"
-            filename="libign_ros2_control-system.so"/>
-  </gazebo>
+            filename="libign_ros2_control-system.so">
+      <parameters>${ros2_control_params}</parameters>
+    </plugin>
+  </gazebo> 
   <!-- For Gazebo Sim (ROS 2 Iron/Jazzy)
   <gazebo>
     <plugin name="gz_ros2_control" filename="libgz_ros2_control-system.so"/>

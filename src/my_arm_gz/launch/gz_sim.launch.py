@@ -20,7 +20,10 @@ def generate_launch_description():
 
     # Force robot_description to be treated as a plain string (avoid YAML parsing)
     robot_description = ParameterValue(
-        Command(["xacro ", xacro_path]),
+        Command([
+            "xacro ", xacro_path,
+            " ros2_control_params:=", controllers_yaml
+        ]),
         value_type=str
     )
 
