@@ -1,0 +1,7 @@
+send_joint_trajectory:
+  ros__parameters:
+    controller_name: arm_controller
+    joint_names: [joint1, joint2, joint3, joint4, joint5, joint6]
+    target_joints: [0.0, -0.8, 1.2, 0.0, 0.6, 0.0]
+    duration_sec: 2.0
+    wait_result: true

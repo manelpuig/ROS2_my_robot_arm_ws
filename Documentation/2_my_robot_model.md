@@ -12,3 +12,8 @@ ros2 launch my_arm_description display.launch.py
 ros2 launch my_arm_gz gz_sim.launch.py
 ````
 ![](./Images/my_arm_gz.png)
+
+- Enviar joint-trajectory
+````shell
+
+````

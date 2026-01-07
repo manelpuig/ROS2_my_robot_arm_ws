@@ -9,8 +9,8 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
-        ("share/" + package_name + "/launch", ["launch/real.launch.py"]),
-        ("share/" + package_name + "/config", ["config/arm_params.yaml"]),
+        ("share/" + package_name + "/launch", ["launch/*.py"]),
+        ("share/" + package_name + "/config", ["config/*.yaml"]),
     ],
     install_requires=["setuptools", "pyserial"],
     zip_safe=True,
@@ -22,6 +22,7 @@ setup(
         "console_scripts": [
             "serial_bridge = my_arm_control.serial_bridge:main",
             "joint_state_estimator = my_arm_control.joint_state_estimator:main",
+            "send_joint_trajectory_exe = my_arm_control.send_joint_trajectory:main",
         ],
     },
 )
