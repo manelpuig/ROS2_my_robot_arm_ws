@@ -9,11 +9,11 @@ ros2 launch my_arm_description display.launch.py
 
 - Bringup the robot arm in Gazebo sim:
 ````shell
-ros2 launch my_arm_gz gz_sim.launch.py
+ros2 launch my_arm_gz gz_sim.launch.py use_sim_time:=true
 ````
 ![](./Images/my_arm_gz.png)
 
 - Enviar joint-trajectory
 ````shell
-ros2 launch my_arm_control send_joint_trajectory.launch.py
+ros2 launch my_arm_control send_joint_trajectory.launch.py use_sim_time:=true
 ````
