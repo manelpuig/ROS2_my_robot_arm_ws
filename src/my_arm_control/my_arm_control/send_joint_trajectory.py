@@ -17,14 +17,15 @@ class SendJointTrajectory(Node):
         self.declare_parameter("duration", 2.0)
         self.declare_parameter("action_name", "/arm_controller/follow_joint_trajectory")
 
-        self._client = ActionClient(self, FollowJointTrajectory, self.get_parameter("action_name").value)
+        self._action_name = self.get_parameter("action_name").value
+        self._client = ActionClient(self, FollowJointTrajectory, self._action_name)
 
     def send_once_and_exit(self):
         joints = self.get_parameter("joints").value
         target = self.get_parameter("target").value
         duration = float(self.get_parameter("duration").value)
 
-        self.get_logger().info(f"Waiting for action server: {self._client.action_name}")
+        self.get_logger().info(f"Waiting for action server: {self._action_name}")
         if not self._client.wait_for_server(timeout_sec=10.0):
             self.get_logger().error("Action server not available.")
             return 1

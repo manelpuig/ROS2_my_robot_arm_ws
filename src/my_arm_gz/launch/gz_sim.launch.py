@@ -18,6 +18,8 @@ def generate_launch_description():
     rviz_path = os.path.join(desc_share, "rviz", "my_arm.rviz")
     controllers_yaml = os.path.join(gz_share, "config", "gz_controllers.yaml")
 
+    use_sim_time = True
+
     # Force robot_description to be treated as a plain string (avoid YAML parsing)
     robot_description = ParameterValue(
         Command([
@@ -37,7 +39,8 @@ def generate_launch_description():
     rsp = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
-        parameters=[{"robot_description": robot_description}],
+        parameters=[{"robot_description": robot_description,
+                    "use_sim_time": use_sim_time}],
         output="screen",
     )
 
@@ -58,9 +61,9 @@ def generate_launch_description():
         package="rviz2",
         executable="rviz2",
         arguments=["-d", rviz_path],
+        parameters=[{"use_sim_time": use_sim_time}],
         output="screen",
     )
-
     # Spawn controllers (gz_ros2_control creates /controller_manager inside Gazebo)
     # Use -p to pass the controller YAML.
     spawner_jsb = Node(

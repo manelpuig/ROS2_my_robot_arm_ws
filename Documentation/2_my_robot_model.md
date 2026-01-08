@@ -15,5 +15,5 @@ ros2 launch my_arm_gz gz_sim.launch.py
 
 - Enviar joint-trajectory
 ````shell
-
+ros2 launch my_arm_control send_joint_trajectory.launch.py
 ````
