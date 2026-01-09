@@ -11,9 +11,6 @@ from launch_ros.parameter_descriptions import ParameterValue
 def generate_launch_description():
     pkg_share = get_package_share_directory("my_arm_description")
 
-    # -----------------------------
-    # Launch arguments
-    # -----------------------------
     declare_arm = DeclareLaunchArgument(
         "arm",
         default_value="my_arm_puma.urdf.xacro",
@@ -23,16 +20,13 @@ def generate_launch_description():
     declare_use_sim_time = DeclareLaunchArgument(
         "use_sim_time",
         default_value="true",
-        description="Use simulation time (true for Gazebo / simulation)"
+        description="Use simulation time"
     )
 
     arm_file = LaunchConfiguration("arm")
     use_sim_time = LaunchConfiguration("use_sim_time")
 
-    # -----------------------------
-    # Robot description from xacro
-    # -----------------------------
-    robot_description = ParameterValue(
+    xacro_path = ParameterValue(
         Command([
             "xacro ",
             os.path.join(pkg_share, "urdf", ""),
@@ -43,23 +37,22 @@ def generate_launch_description():
 
     rviz_path = os.path.join(pkg_share, "rviz", "my_arm.rviz")
 
-    # -----------------------------
-    # Nodes
-    # -----------------------------
     rsp = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
         parameters=[{
-            "robot_description": robot_description,
+            "robot_description": xacro_path,
             "use_sim_time": use_sim_time,
         }],
         output="screen",
     )
 
+    # IMPORTANT: pass robot_description to JSP GUI
     jsp_gui = Node(
         package="joint_state_publisher_gui",
         executable="joint_state_publisher_gui",
         parameters=[{
+            "robot_description": xacro_path,
             "use_sim_time": use_sim_time,
         }],
         output="screen",
@@ -69,9 +62,7 @@ def generate_launch_description():
         package="rviz2",
         executable="rviz2",
         arguments=["-d", rviz_path],
-        parameters=[{
-            "use_sim_time": use_sim_time,
-        }],
+        parameters=[{"use_sim_time": use_sim_time}],
         output="screen",
     )
 
