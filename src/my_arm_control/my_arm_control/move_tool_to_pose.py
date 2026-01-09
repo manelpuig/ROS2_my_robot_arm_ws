@@ -13,7 +13,7 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 # 4x4 homogeneous transforms
 # -----------------------------
 def transl(x, y, z):
-    T = np.eye(4, float)
+    T = np.eye(4, dtype=float)
     T[0, 3] = x
     T[1, 3] = y
     T[2, 3] = z
@@ -21,7 +21,7 @@ def transl(x, y, z):
 
 def trotx(a):
     ca, sa = math.cos(a), math.sin(a)
-    T = np.eye(4, float)
+    T = np.eye(4, dtype=float)
     T[:3, :3] = np.array([
         [1,  0,   0],
         [0, ca, -sa],
@@ -31,7 +31,7 @@ def trotx(a):
 
 def troty(a):
     ca, sa = math.cos(a), math.sin(a)
-    T = np.eye(4, float)
+    T = np.eye(4, dtype=float)
     T[:3, :3] = np.array([
         [ ca, 0, sa],
         [  0, 1,  0],
@@ -41,7 +41,7 @@ def troty(a):
 
 def trotz(a):
     ca, sa = math.cos(a), math.sin(a)
-    T = np.eye(4, float)
+    T = np.eye(4, dtype=float)
     T[:3, :3] = np.array([
         [ca, -sa, 0],
         [sa,  ca, 0],
@@ -128,7 +128,7 @@ class MoveToolToPoseSimple(Node):
         # joint4: Rz, then +L4
         # joint5: Ry, then +L5
         # joint6: Rz, then +L6 (tool offset)
-        T = np.eye(4, float)
+        T = np.eye(4, dtype=float)
         T = T @ transl(0, 0, bz)
 
         T = T @ trotz(q[0]) @ transl(0, 0, L1)
@@ -211,7 +211,7 @@ class MoveToolToPoseSimple(Node):
             # 3) Damped Least Squares step to compute dq
             # dq = J^T (J J^T + λ^2 I)^-1 e
             JJt = J @ J.T
-            dq_step = J.T @ np.linalg.solve(JJt + (lam ** 2) * np.eye(6), e)
+            dq_step = J.T @ np.linalg.solve(JJt + (lam ** 2) * np.eye(6,6), e)
 
             # Update
             q = q + alpha * dq_step

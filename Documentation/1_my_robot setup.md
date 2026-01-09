@@ -210,9 +210,10 @@ export GZ_SIM_SYSTEM_PLUGIN_PATH=/opt/ros/humble/lib:${GZ_SIM_SYSTEM_PLUGIN_PATH
 If you need to reinstall the ws:
 ````shell
 cd ROS2_my_robot_arm_ws
+rm -rf build install log
 unset AMENT_PREFIX_PATH COLCON_PREFIX_PATH CMAKE_PREFIX_PATH
 source /opt/ros/humble/setup.bash
-rm -rf build install log
-colcon build --symlink-install --merge-install
+
+colcon build
 source install/setup.bash
 ````

@@ -9,7 +9,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_share = get_package_share_directory("my_arm_control")
-    params_file = os.path.join(pkg_share, "config", "ik_tool_pose.yaml")
+    params_file = os.path.join(pkg_share, "config", "tool_pose.yaml")
 
     use_sim_time = LaunchConfiguration("use_sim_time")
 
