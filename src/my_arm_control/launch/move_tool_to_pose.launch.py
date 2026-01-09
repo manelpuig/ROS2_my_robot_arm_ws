@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import os
-
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -10,7 +9,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_share = get_package_share_directory("my_arm_control")
-    params_file = os.path.join(pkg_share, "config", "joints.yaml")
+    params_file = os.path.join(pkg_share, "config", "ik_tool_pose.yaml")
 
     use_sim_time = LaunchConfiguration("use_sim_time")
 
@@ -23,8 +22,8 @@ def generate_launch_description():
 
         Node(
             package="my_arm_control",
-            executable="send_joint_trajectory_exe",
-            name="send_joint_trajectory",
+            executable="move_tool_to_pose_exe",   # <- posa aquí el teu executable real
+            name="move_tool_to_pose",
             output="screen",
             parameters=[
                 params_file,

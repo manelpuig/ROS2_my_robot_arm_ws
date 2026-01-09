@@ -1,0 +1,18 @@
+ik_to_trajectory:
+  ros__parameters:
+    controller_name: arm_controller
+    joint_names: [joint1, joint2, joint3, joint4, joint5, joint6]
+
+    # Desired tool pose (base frame)
+    target_xyz: [0.25, 0.00, 0.25]
+    target_rpy: [0.0, 1.57, 0.0]   # rad
+
+    seed_joints: [0.0, -0.8, 1.2, 0.0, 0.6, 0.0]
+    duration_sec: 2.0
+
+    max_iters: 80
+    tol_pos: 0.002
+    tol_rot: 0.01
+    damping: 0.05
+    alpha: 0.6
+    eps_jac: 1.0e-4
