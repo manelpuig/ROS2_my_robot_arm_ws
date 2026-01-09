@@ -75,7 +75,7 @@ def rotvec_from_R(R):
 
 class MoveToolToPoseSimple(Node):
     def __init__(self):
-        super().__init__("move_tool_to_pose")
+        super().__init__("send_pose_trajectory")
 
         # Controller / joints
         self.declare_parameter("controller_name", "arm_controller")

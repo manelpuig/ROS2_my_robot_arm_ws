@@ -22,8 +22,8 @@ def generate_launch_description():
 
         Node(
             package="my_arm_control",
-            executable="move_tool_to_pose_exe",   # <- posa aquí el teu executable real
-            name="move_tool_to_pose",
+            executable="send_pose_trajectory_exe",   # <- posa aquí el teu executable real
+            name="send_pose_trajectory",
             output="screen",
             parameters=[
                 params_file,
