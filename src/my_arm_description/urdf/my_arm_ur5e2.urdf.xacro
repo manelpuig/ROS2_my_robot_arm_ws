@@ -102,7 +102,7 @@
   <!-- 
        Link macros (cylinders along x/y/z)
         -->
-  <xacro:macro name="cyl_z" params="name length mass">
+  <xacro:macro name="cyl_z" params="name length mass sign">
     <!-- sign: +1 or -1 to draw toward +Z or -Z -->
     <link name="${name}">
       <visual>
@@ -151,7 +151,7 @@
   </xacro:macro>
 
   <!-- Physical links -->
-  <xacro:cyl_z name="link1" length="$(arg d1)" mass="$(arg m_link)"/>
+  <xacro:cyl_z name="link1" length="$(arg d1)" mass="$(arg m_link)" sign="1"/>
   <xacro:cyl_x name="link2" length="$(arg a2)" mass="$(arg m_link)" sign="-1"/>
   <xacro:cyl_x name="link3" length="$(arg a3)" mass="$(arg m_link)" sign="-1"/>
 
@@ -219,7 +219,7 @@
   <joint name="joint6" type="revolute">
     <parent link="link5"/>
     <child link="link6"/>
-    <origin xyz="0 0 $(arg d5)" rpy="0 0 0"/>
+    <origin xyz="0 0 -$(arg d5)" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.8" friction="0.0"/>
