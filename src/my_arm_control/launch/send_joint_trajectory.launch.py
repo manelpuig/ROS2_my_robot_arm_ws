@@ -28,7 +28,13 @@ def generate_launch_description():
             output="screen",
             parameters=[
                 params_file,
+
+                # --- Time ---
                 {"use_sim_time": use_sim_time},
+
+                # --- TF frames for pose logging ---
+                {"base_frame": "base_link"},
+                {"tip_frame": "link6"},
             ],
         ),
     ])

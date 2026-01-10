@@ -4,7 +4,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess, TimerAction, DeclareLaunchArgument
-from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution, TextSubstitution
+from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution, TextSubstitution, FindExecutable
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -47,10 +47,9 @@ def generate_launch_description():
     # robot_description
     robot_description = ParameterValue(
         Command([
-            "xacro ",
-            xacro_path,
-            " ros2_control_params:=",
-            controllers_yaml,
+            FindExecutable(name="xacro"), " ",
+            xacro_path, " ",
+            "ros2_control_params:=", controllers_yaml
         ]),
         value_type=str,
     )
