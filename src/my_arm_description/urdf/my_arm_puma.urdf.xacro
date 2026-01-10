@@ -183,7 +183,7 @@
     <parent link="link1"/>
     <child link="link2"/>
     <origin xyz="0 0 ${L1}" rpy="0 1.57079632679 0"/>
-    <axis xyz="0 -1 0"/>
+    <axis xyz="0 1 0"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
@@ -197,7 +197,7 @@
     <parent link="link2"/>
     <child link="link3"/>
     <origin xyz="0 0 ${L2}" rpy="0 57079632679 0"/>
-    <axis xyz="0 -1 0"/>
+    <axis xyz="0 1 0"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
