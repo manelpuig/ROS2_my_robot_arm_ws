@@ -26,7 +26,8 @@ ros2 launch my_arm_description display.launch.py use_sim_time:=false model:=my_a
 ````shell
 ros2 launch my_arm_gz gz_sim.launch.py use_sim_time:=true model:=my_arm_puma.urdf.xacro
 ````
-![](./Images/my_arm_puma_gz.png)
+
+![](./Images/my_arm_puma2_gz.png)
 
 - Enviar joint-trajectory
 ````shell

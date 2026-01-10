@@ -1,0 +1,326 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="ur5e_simple_dh">
+
+  <xacro:arg name="ros2_control_params" default=""/>
+
+  <!-- 
+       UR5e DH parameters (meters)
+       (Common UR5e table; a2,a3 are negative in DH. Here we keep their magnitudes
+        and apply the sign in the fixed transforms.)
+       d1=0.1625
+       a2=-0.425
+       a3=-0.3922
+       d4=0.1333
+       d5=0.0997
+       d6=0.0996
+  -->
+  <xacro:arg name="d1" default="0.1625"/>
+  <xacro:arg name="a2" default="-0.425"/>
+  <xacro:arg name="a3" default="-0.3922"/>
+  <xacro:arg name="d4" default="0.1333"/>
+  <xacro:arg name="d5" default="0.0997"/>
+  <xacro:arg name="d6" default="0.0996"/>
+
+  <!-- Visual thickness / base -->
+  <xacro:arg name="r_link" default="0.03"/>
+  <xacro:arg name="base_x" default="0.18"/>
+  <xacro:arg name="base_y" default="0.18"/>
+  <xacro:arg name="base_z" default="0.06"/>
+
+  <!-- Masses (non-zero) -->
+  <xacro:arg name="m_base" default="5.0"/>
+  <xacro:arg name="m_link" default="2.0"/>
+  <xacro:arg name="m_tool" default="0.2"/>
+
+  <!-- Joint limits -->
+  <xacro:arg name="joint_vel" default="2.0"/>
+  <xacro:arg name="joint_effort" default="50.0"/>
+
+  <!-- Convenience properties -->
+  <xacro:property name="d1" value="$(arg d1)"/>
+  <xacro:property name="a2" value="$(arg a2)"/>
+  <xacro:property name="a3" value="$(arg a3)"/>
+  <xacro:property name="d4" value="$(arg d4)"/>
+  <xacro:property name="d5" value="$(arg d5)"/>
+  <xacro:property name="d6" value="$(arg d6)"/>
+  <xacro:property name="r"  value="$(arg r_link)"/>
+
+  <!--   Inertial macros (safe)    -->
+  <xacro:macro name="inertial_box" params="mass x y z">
+    <inertial>
+      <mass value="${mass}"/>
+      <inertia ixx="${mass*(y*y + z*z)/12.0}" ixy="0.0" ixz="0.0"
+               iyy="${mass*(x*x + z*z)/12.0}" iyz="0.0"
+               izz="${mass*(x*x + y*y)/12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="inertial_cylinder_z" params="mass radius length">
+    <inertial>
+      <mass value="${mass}"/>
+      <inertia ixx="${mass*(3*radius*radius + length*length)/12.0}" ixy="0.0" ixz="0.0"
+               iyy="${mass*(3*radius*radius + length*length)/12.0}" iyz="0.0"
+               izz="${mass*(radius*radius)/2.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Cylinder aligned with X (visual only); inertia approx swapped -->
+  <xacro:macro name="inertial_cylinder_x" params="mass radius length">
+    <inertial>
+      <mass value="${mass}"/>
+      <inertia ixx="${mass*(radius*radius)/2.0}" ixy="0.0" ixz="0.0"
+               iyy="${mass*(3*radius*radius + length*length)/12.0}" iyz="0.0"
+               izz="${mass*(3*radius*radius + length*length)/12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!--  Materials  -->
+  <material name="dark"><color rgba="0.2 0.2 0.2 1.0"/></material>
+  <material name="grey"><color rgba="0.6 0.6 0.6 1.0"/></material>
+  <material name="blue"><color rgba="0.2 0.3 0.8 1.0"/></material>
+
+  <!--  Links   -->
+  <link name="world"/>
+
+  <joint name="world_to_base" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${$(arg base_z)/2.0}" rpy="0 0 0"/>
+      <geometry><box size="$(arg base_x) $(arg base_y) $(arg base_z)"/></geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${$(arg base_z)/2.0}" rpy="0 0 0"/>
+      <geometry><box size="$(arg base_x) $(arg base_y) $(arg base_z)"/></geometry>
+    </collision>
+    <xacro:inertial_box mass="$(arg m_base)" x="$(arg base_x)" y="$(arg base_y)" z="$(arg base_z)"/>
+  </link>
+
+  <!-- Helper macro: a simple cylinder "physical" link along Z -->
+  <xacro:macro name="cyl_z" params="name length mat mass">
+    <link name="${name}">
+      <visual>
+        <origin xyz="0 0 ${length/2.0}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${r}" length="${length}"/></geometry>
+        <material name="${mat}"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${length/2.0}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${r}" length="${length}"/></geometry>
+      </collision>
+      <xacro:inertial_cylinder_z mass="${mass}" radius="${r}" length="${length}"/>
+    </link>
+  </xacro:macro>
+
+  <!-- Helper macro: a simple cylinder "physical" link along X -->
+  <xacro:macro name="cyl_x" params="name length mat mass">
+    <link name="${name}">
+      <visual>
+        <origin xyz="${length/2.0} 0 0" rpy="0 1.57079632679 0"/>
+        <geometry><cylinder radius="${r}" length="${length}"/></geometry>
+        <material name="${mat}"/>
+      </visual>
+      <collision>
+        <origin xyz="${length/2.0} 0 0" rpy="0 1.57079632679 0"/>
+        <geometry><cylinder radius="${r}" length="${length}"/></geometry>
+      </collision>
+      <xacro:inertial_cylinder_x mass="${mass}" radius="${r}" length="${length}"/>
+    </link>
+  </xacro:macro>
+
+  <!-- Frame-only links (tiny, but with inertial to avoid parser issues if you ever add collision) -->
+  <link name="frame1"/>
+  <link name="frame2"/>
+  <link name="frame3"/>
+  <link name="frame4"/>
+  <link name="frame5"/>
+  <link name="frame6"/>
+
+  <!-- Physical links (simple geometry) -->
+  <xacro:cyl_z name="link1" length="${d1}" mat="grey" mass="$(arg m_link)"/>
+  <xacro:cyl_x name="link2" length="${abs(a2)}" mat="grey" mass="$(arg m_link)"/>
+  <xacro:cyl_x name="link3" length="${abs(a3)}" mat="grey" mass="$(arg m_link)"/>
+  <xacro:cyl_z name="link4" length="${d4}" mat="blue" mass="$(arg m_link)"/>
+  <xacro:cyl_z name="link5" length="${d5}" mat="blue" mass="$(arg m_link)"/>
+  <xacro:cyl_z name="link6" length="${d6}" mat="blue" mass="$(arg m_link)"/>
+
+  <!-- Optional tool marker (fixed). Keep it if useful for TF. -->
+  <link name="tool0">
+    <visual>
+      <origin xyz="0 0 0.02" rpy="0 0 0"/>
+      <geometry><box size="0.05 0.05 0.04"/></geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.02" rpy="0 0 0"/>
+      <geometry><box size="0.05 0.05 0.04"/></geometry>
+    </collision>
+    <xacro:inertial_box mass="$(arg m_tool)" x="0.05" y="0.05" z="0.04"/>
+  </link>
+
+  <!-- 
+       Joints (DH-correct structure)
+       Revolute joints are the 6 DOF joints: joint1..joint6
+       Fixed joints implement DH offsets/twists between joint frames.
+        -->
+
+  <!-- Joint 1: rotation about Z at base -->
+  <joint name="joint1" type="revolute">
+    <parent link="base_link"/>
+    <child link="frame1"/>
+    <origin xyz="0 0 $(arg base_z)" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
+    <dynamics damping="0.2" friction="0.0"/>
+  </joint>
+
+  <!-- DH after joint1: TransZ(d1) * RotX(+pi/2) -->
+  <joint name="dh1_fixed" type="fixed">
+    <parent link="frame1"/>
+    <child link="link1"/>
+    <origin xyz="0 0 ${d1}" rpy="1.57079632679 0 0"/>
+  </joint>
+
+  <!-- Joint 2: rotation about Z (DH theta2) -->
+  <joint name="joint2" type="revolute">
+    <parent link="link1"/>
+    <child link="frame2"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
+    <dynamics damping="0.2" friction="0.0"/>
+  </joint>
+
+  <!-- DH after joint2: TransX(a2) (a2 is negative) -->
+  <joint name="dh2_fixed" type="fixed">
+    <parent link="frame2"/>
+    <child link="link2"/>
+    <origin xyz="${a2} 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Joint 3: rotation about Z (DH theta3) -->
+  <joint name="joint3" type="revolute">
+    <parent link="link2"/>
+    <child link="frame3"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
+    <dynamics damping="0.2" friction="0.0"/>
+  </joint>
+
+  <!-- DH after joint3: TransX(a3) (a3 is negative) -->
+  <joint name="dh3_fixed" type="fixed">
+    <parent link="frame3"/>
+    <child link="link3"/>
+    <origin xyz="${a3} 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Joint 4: rotation about Z (DH theta4) -->
+  <joint name="joint4" type="revolute">
+    <parent link="link3"/>
+    <child link="frame4"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
+    <dynamics damping="0.2" friction="0.0"/>
+  </joint>
+
+  <!-- DH after joint4: TransZ(d4) * RotX(+pi/2) -->
+  <joint name="dh4_fixed" type="fixed">
+    <parent link="frame4"/>
+    <child link="link4"/>
+    <origin xyz="0 0 ${d4}" rpy="1.57079632679 0 0"/>
+  </joint>
+
+  <!-- Joint 5: rotation about Z (DH theta5) -->
+  <joint name="joint5" type="revolute">
+    <parent link="link4"/>
+    <child link="frame5"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
+    <dynamics damping="0.2" friction="0.0"/>
+  </joint>
+
+  <!-- DH after joint5: TransZ(d5) * RotX(-pi/2) -->
+  <joint name="dh5_fixed" type="fixed">
+    <parent link="frame5"/>
+    <child link="link5"/>
+    <origin xyz="0 0 ${d5}" rpy="-1.57079632679 0 0"/>
+  </joint>
+
+  <!-- Joint 6: rotation about Z (DH theta6) -->
+  <joint name="joint6" type="revolute">
+    <parent link="link5"/>
+    <child link="frame6"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
+    <dynamics damping="0.2" friction="0.0"/>
+  </joint>
+
+  <!-- DH after joint6: TransZ(d6) -->
+  <joint name="dh6_fixed" type="fixed">
+    <parent link="frame6"/>
+    <child link="link6"/>
+    <origin xyz="0 0 ${d6}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Tool -->
+  <joint name="tool0_fixed" type="fixed">
+    <parent link="link6"/>
+    <child link="tool0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!--  ros2_control (gz_ros2_control) -->
+  <ros2_control name="MyArmSystem" type="system">
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+
+    <joint name="joint1">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint2">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint3">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint4">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint5">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint6">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+  <gazebo>
+    <plugin name="ign_ros2_control::IgnitionROS2ControlPlugin"
+            filename="libign_ros2_control-system.so">
+      <parameters>$(arg ros2_control_params)</parameters>
+    </plugin>
+  </gazebo>
+
+</robot>

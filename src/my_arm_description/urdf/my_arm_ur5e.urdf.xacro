@@ -304,5 +304,17 @@
       <parameters>$(arg ros2_control_params)</parameters>
     </plugin>
   </gazebo>
+  
+  <gazebo reference="link1">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <gazebo reference="link2">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <gazebo reference="link3">
+    <material>Gazebo/Blue</material>
+  </gazebo>
 
 </robot>
