@@ -32,7 +32,6 @@
   <xacro:arg name="joint_effort" default="5.0"/>
 
   <!-- Convenience properties -->
-  <xacro:property name="base_z" value="$(arg base_z)"/>
   <xacro:property name="L1" value="$(arg L1)"/>
   <xacro:property name="L2" value="$(arg L2)"/>
   <xacro:property name="L3" value="$(arg L3)"/>
@@ -89,7 +88,7 @@
   <joint name="world_to_base" type="fixed">
     <parent link="world"/>
     <child link="base_link"/>
-    <origin xyz="0 0 ${base_z}" rpy="0 0 0"/>
+    <origin xyz="0 0 $(arg base_z)" rpy="0 0 0"/>
   </joint>
 
   <link name="base_link">
@@ -168,7 +167,7 @@
   <joint name="joint1" type="revolute">
     <parent link="base_link"/>
     <child link="link1"/>
-    <origin xyz="0 0 ${L1}" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
@@ -183,7 +182,7 @@
   <joint name="joint2" type="revolute">
     <parent link="link1"/>
     <child link="link2"/>
-    <origin xyz="0 0 0" rpy="0 1.57079632679 0"/>
+    <origin xyz="0 0 ${L1}" rpy="0 1.57079632679 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
@@ -197,7 +196,7 @@
   <joint name="joint3" type="revolute">
     <parent link="link2"/>
     <child link="link3"/>
-    <origin xyz="0 0 ${L2}" rpy="0 1.57079632679 0"/>
+    <origin xyz="0 0 ${L2}" rpy="0 -1.57079632679 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
