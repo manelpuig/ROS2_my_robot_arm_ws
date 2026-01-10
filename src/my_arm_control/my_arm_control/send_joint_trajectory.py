@@ -13,22 +13,17 @@ from tf2_ros import LookupException, ConnectivityException, ExtrapolationExcepti
 
 
 def quat_to_rpy(x: float, y: float, z: float, w: float):
-    """
-    Convert quaternion (x,y,z,w) to roll, pitch, yaw in radians.
-    """
-    # roll (x-axis rotation)
+    """Convert quaternion to roll, pitch, yaw (radians)."""
     sinr_cosp = 2.0 * (w * x + y * z)
     cosr_cosp = 1.0 - 2.0 * (x * x + y * y)
     roll = math.atan2(sinr_cosp, cosr_cosp)
 
-    # pitch (y-axis rotation)
     sinp = 2.0 * (w * y - z * x)
     if abs(sinp) >= 1:
         pitch = math.copysign(math.pi / 2.0, sinp)
     else:
         pitch = math.asin(sinp)
 
-    # yaw (z-axis rotation)
     siny_cosp = 2.0 * (w * z + x * y)
     cosy_cosp = 1.0 - 2.0 * (y * y + z * z)
     yaw = math.atan2(siny_cosp, cosy_cosp)
@@ -40,15 +35,21 @@ class SendJointTrajectory(Node):
     def __init__(self):
         super().__init__("send_joint_trajectory")
 
-        # Parameters (keep as you had)
-        self.declare_parameter("joints", ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"])
-        self.declare_parameter("target", [0.0, -0.8, 1.2, 0.0, 0.6, 0.0])
+        # Parameters (YAML IN DEGREES)
+        self.declare_parameter(
+            "joints",
+            ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"],
+        )
+        self.declare_parameter(
+            "target",   # degrees
+            [0.0, -45.0, 60.0, 0.0, 30.0, 0.0],
+        )
         self.declare_parameter("duration", 2.0)
         self.declare_parameter("action_name", "/arm_controller/follow_joint_trajectory")
 
-        # TF pose query parameters
+        # TF pose query
         self.declare_parameter("base_frame", "base_link")
-        self.declare_parameter("tip_frame", "link6")   # change to "tool0" if you have tool0
+        self.declare_parameter("tip_frame", "link6")
         self.declare_parameter("tf_timeout", 2.0)
 
         self._action_name = self.get_parameter("action_name").value
@@ -63,10 +64,11 @@ class SendJointTrajectory(Node):
         tip = self.get_parameter("tip_frame").value
         timeout = float(self.get_parameter("tf_timeout").value)
 
-        # Lookup latest available transform (Time=0 => latest)
         try:
             tf = self._tf_buffer.lookup_transform(
-                base, tip, rclpy.time.Time(),
+                base,
+                tip,
+                rclpy.time.Time(),
                 timeout=rclpy.duration.Duration(seconds=timeout),
             )
         except (LookupException, ConnectivityException, ExtrapolationException) as e:
@@ -75,24 +77,27 @@ class SendJointTrajectory(Node):
 
         t = tf.transform.translation
         q = tf.transform.rotation
-
         roll, pitch, yaw = quat_to_rpy(q.x, q.y, q.z, q.w)
 
         self.get_logger().info(f"End-effector pose (TF): {base} -> {tip}")
-        self.get_logger().info(f"  position [m]: x={t.x:.4f}, y={t.y:.4f}, z={t.z:.4f}")
-        self.get_logger().info(f"  quaternion  : x={q.x:.6f}, y={q.y:.6f}, z={q.z:.6f}, w={q.w:.6f}")
         self.get_logger().info(
-            f"  rpy [rad]   : roll={roll:.4f}, pitch={pitch:.4f}, yaw={yaw:.4f}"
+            f"  position [m]: x={t.x:.4f}, y={t.y:.4f}, z={t.z:.4f}"
         )
         self.get_logger().info(
-            f"  rpy [deg]   : roll={math.degrees(roll):.2f}, pitch={math.degrees(pitch):.2f}, yaw={math.degrees(yaw):.2f}"
+            f"  rpy [deg]   : "
+            f"roll={math.degrees(roll):.2f}, "
+            f"pitch={math.degrees(pitch):.2f}, "
+            f"yaw={math.degrees(yaw):.2f}"
         )
         return True
 
     def send_once_and_exit(self):
         joints = self.get_parameter("joints").value
-        target = self.get_parameter("target").value
+        target_deg = self.get_parameter("target").value
         duration = float(self.get_parameter("duration").value)
+
+        # Convert DEGREES -> RADIANS (internal, silent)
+        target_rad = [math.radians(float(v)) for v in target_deg]
 
         self.get_logger().info(f"Waiting for action server: {self._action_name}")
         if not self._client.wait_for_server(timeout_sec=10.0):
@@ -103,15 +108,15 @@ class SendJointTrajectory(Node):
         goal.trajectory.joint_names = list(joints)
 
         p = JointTrajectoryPoint()
-        p.positions = list(target)
+        p.positions = target_rad
         p.time_from_start.sec = int(duration)
         p.time_from_start.nanosec = int((duration - int(duration)) * 1e9)
         goal.trajectory.points = [p]
 
         self.get_logger().info("Sending trajectory:")
-        self.get_logger().info(f"  joints: {goal.trajectory.joint_names}")
-        self.get_logger().info(f"  target: {p.positions}")
-        self.get_logger().info(f"  duration: {duration:.3f}s")
+        self.get_logger().info(f"  joints        : {goal.trajectory.joint_names}")
+        self.get_logger().info(f"  target [deg]  : {[float(v) for v in target_deg]}")
+        self.get_logger().info(f"  duration [s]  : {duration:.3f}")
 
         send_goal_future = self._client.send_goal_async(goal)
         rclpy.spin_until_future_complete(self, send_goal_future)
@@ -131,16 +136,14 @@ class SendJointTrajectory(Node):
             return 3
 
         self.get_logger().info(
-            f"Result received. status={result.status}, error_code={result.result.error_code}"
+            f"Result received. status={result.status}, "
+            f"error_code={result.result.error_code}"
         )
 
-        # ---- Pose log after motion ----
-        ok = self._log_tip_pose()
-        if not ok:
+        if not self._log_tip_pose():
             self.get_logger().warn(
                 "Could not read end-effector TF. "
-                "Ensure robot_state_publisher is running and publishing TF, "
-                "and that tip_frame exists."
+                "Check robot_state_publisher and joint_state_broadcaster."
             )
 
         return 0
