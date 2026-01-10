@@ -103,14 +103,15 @@
        Link macros (cylinders along x/y/z)
         -->
   <xacro:macro name="cyl_z" params="name length mass">
+    <!-- sign: +1 or -1 to draw toward +Z or -Z -->
     <link name="${name}">
       <visual>
-        <origin xyz="0 0 ${length/2.0}" rpy="0 0 0"/>
+        <origin xyz="0 0 ${sign*length/2.0}" rpy="0 0 0"/>
         <geometry><cylinder radius="${r}" length="${length}"/></geometry>
         <material name="pale_blue"/>
       </visual>
       <collision>
-        <origin xyz="0 0 ${length/2.0}" rpy="0 0 0"/>
+        <origin xyz="0 0 ${sign*length/2.0}" rpy="0 0 0"/>
         <geometry><cylinder radius="${r}" length="${length}"/></geometry>
       </collision>
       <xacro:inertial_cylinder_z mass="${mass}" radius="${r}" length="${length}"/>
