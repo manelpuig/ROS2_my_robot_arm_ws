@@ -18,7 +18,7 @@
   <xacro:arg name="L6" default="0.0"/>
 
   <!-- Sizes -->
-  <xacro:arg name="r_link" default="0.03"/>
+  <xacro:arg name="r_link" default="0.04"/>
   <xacro:arg name="base_x" default="0.10"/>
   <xacro:arg name="base_y" default="0.10"/>
   <xacro:arg name="base_z" default="0.02"/>
@@ -290,15 +290,15 @@
   </gazebo>
 
   <gazebo reference="link1">
-    <material>Gazebo/LightBlue</material>
+    <material>Gazebo/Blue</material>
   </gazebo>
 
   <gazebo reference="link2">
-    <material>Gazebo/LightBlue</material>
+    <material>Gazebo/Blue</material>
   </gazebo>
 
   <gazebo reference="link3">
-    <material>Gazebo/LightBlue</material>
+    <material>Gazebo/Blue</material>
   </gazebo>
 
 </robot>
