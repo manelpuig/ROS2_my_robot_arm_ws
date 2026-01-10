@@ -71,6 +71,12 @@
                  iyy="${mass*(3*radius*radius + length*length)/12.0}" iyz="0.0"
                  izz="${mass*(3*radius*radius + length*length)/12.0}"/>
       </xacro:if>
+        <!-- Cylinder aligned with Y -->
+      <xacro:if value="${axis == 'y'}">
+        <inertia ixx="${mass*(3*radius*radius + length*length)/12.0}" ixy="0.0" ixz="0.0"
+                 iyy="${mass*(radius*radius)/2.0}" iyz="0.0"
+                 izz="${mass*(3*radius*radius + length*length)/12.0}"/>
+      </xacro:if>
     </inertial>
   </xacro:macro>
 
@@ -120,6 +126,9 @@
         <xacro:if value="${axis == 'x'}">
           <origin xyz="${length/2.0} 0 0" rpy="0 1.57079632679 0"/>
         </xacro:if>
+        <xacro:if value="${axis == 'y'}">
+          <origin xyz="0 ${length/2.0} 0" rpy="1.57079632679 0 0"/>
+        </xacro:if>
         <geometry>
           <cylinder radius="${r}" length="${length}"/>
         </geometry>
@@ -131,6 +140,9 @@
         </xacro:if>
         <xacro:if value="${axis == 'x'}">
           <origin xyz="${length/2.0} 0 0" rpy="0 1.57079632679 0"/>
+        </xacro:if>
+        <xacro:if value="${axis == 'y'}">
+          <origin xyz="0 ${length/2.0} 0" rpy="1.57079632679 0 0"/>
         </xacro:if>
         <geometry>
           <cylinder radius="${r}" length="${length}"/>
@@ -148,9 +160,9 @@
   <!-- link3: elbow-to-wrist1 along |a3| in X -->
   <xacro:cyl_link name="link3" length="${a3_abs}" axis="x" mass="$(arg m_link)" mat="grey"/>
   <!-- link4: wrist1 offset d4 in Z -->
-  <xacro:cyl_link name="link4" length="${d4}"     axis="z" mass="$(arg m_link)" mat="blue"/>
+  <xacro:cyl_link name="link4" length="${d4}"     axis="y" mass="$(arg m_link)" mat="blue"/>
   <!-- link5: wrist2 offset d5 in Z -->
-  <xacro:cyl_link name="link5" length="${d5}"     axis="y" mass="$(arg m_link)" mat="blue"/>
+  <xacro:cyl_link name="link5" length="${d5}"     axis="z" mass="$(arg m_link)" mat="blue"/>
   <!-- link6: wrist3 to flange d6 in Z -->
   <xacro:cyl_link name="link6" length="${d6}"     axis="y" mass="$(arg m_link)" mat="blue"/>
 
@@ -213,7 +225,7 @@
   <joint name="joint4" type="revolute">
     <parent link="link3"/>
     <child link="link4"/>
-    <origin xyz="${a3_abs} 0 0" rpy="0 0 0"/>
+    <origin xyz="${a3_abs} 0 0" rpy="-3.14 0 0"/>
     <axis xyz="0 -1 0"/>
     <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
@@ -223,7 +235,7 @@
   <joint name="joint5" type="revolute">
     <parent link="link4"/>
     <child link="link5"/>
-    <origin xyz="0 0 ${d4}" rpy="0 0 0"/>
+    <origin xyz="0 0 ${d4}" rpy="1.57 0 0"/>
     <axis xyz="0 0 1"/>
     <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
@@ -233,7 +245,7 @@
   <joint name="joint6" type="revolute">
     <parent link="link5"/>
     <child link="link6"/>
-    <origin xyz="0 0 ${d5}" rpy="0 -1.57 0"/>
+    <origin xyz="0 0 ${d5}" rpy="-1.57 0 0"/>
     <axis xyz="0 -1 0"/>
     <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
