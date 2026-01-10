@@ -15,8 +15,8 @@
        d6=0.0996
   -->
   <xacro:arg name="d1" default="0.1625"/>
-  <xacro:arg name="a2" default="0.425"/>
-  <xacro:arg name="a3" default="0.3922"/>
+  <xacro:arg name="a2" default="-0.425"/>
+  <xacro:arg name="a3" default="-0.3922"/>
   <xacro:arg name="d4" default="0.1333"/>
   <xacro:arg name="d5" default="0.0997"/>
   <xacro:arg name="d6" default="0.0996"/>
@@ -38,8 +38,8 @@
 
   <!-- Convenience properties -->
   <xacro:property name="d1" value="$(arg d1)"/>
-  <xacro:property name="a2" value="$(arg a2)"/>
-  <xacro:property name="a3" value="$(arg a3)"/>
+  <xacro:property name="a2_len" value="${-1.0 * $(arg a2)}"/>
+  <xacro:property name="a3_len" value="${-1.0 * $(arg a3)}"/>
   <xacro:property name="d4" value="$(arg d4)"/>
   <xacro:property name="d5" value="$(arg d5)"/>
   <xacro:property name="d6" value="$(arg d6)"/>
@@ -143,8 +143,8 @@
 
   <!-- Physical links (simple geometry) -->
   <xacro:cyl_z name="link1" length="${d1}" mat="grey" mass="$(arg m_link)"/>
-  <xacro:cyl_x name="link2" length="${a2}" mat="grey" mass="$(arg m_link)"/>
-  <xacro:cyl_x name="link3" length="${a3}" mat="grey" mass="$(arg m_link)"/>
+  <xacro:cyl_x name="link2" length="${a2_len}" mat="grey" mass="$(arg m_link)"/>
+  <xacro:cyl_x name="link3" length="${a3_len}" mat="grey" mass="$(arg m_link)"/>
   <xacro:cyl_z name="link4" length="${d4}" mat="blue" mass="$(arg m_link)"/>
   <xacro:cyl_z name="link5" length="${d5}" mat="blue" mass="$(arg m_link)"/>
   <xacro:cyl_z name="link6" length="${d6}" mat="blue" mass="$(arg m_link)"/>
@@ -183,9 +183,15 @@
   <joint name="dh1_fixed" type="fixed">
     <parent link="frame1"/>
     <child link="link1"/>
-    <origin xyz="0 0 ${d1}" rpy="1.57079632679 0 0"/>
+    <origin xyz="0 0 ${d1}" rpy="0 0 0"/>
   </joint>
+  <link name="frame1_twist"/>
 
+  <joint name="dh1_twist" type="fixed">
+    <parent link="link1"/>
+    <child link="frame1_twist"/>
+    <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+  </joint>
   <!-- Joint 2: rotation about Z (DH theta2) -->
   <joint name="joint2" type="revolute">
     <parent link="link1"/>

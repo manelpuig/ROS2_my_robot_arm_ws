@@ -13,7 +13,34 @@ arm_controller:
     joints: [joint1, joint2, joint3, joint4, joint5, joint6]
     command_interfaces: [position]
     state_interfaces: [position, velocity]
+
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
+
     allow_partial_joints_goal: false
     allow_nonzero_velocity_at_trajectory_end: false
+
+    # -------------------------
+    # Stability / holding behavior
+    # -------------------------
+    constraints:
+      stopped_velocity_tolerance: 0.05
+      goal_time: 0.5
+      joint1: {trajectory: 0.10, goal: 0.05}
+      joint2: {trajectory: 0.10, goal: 0.05}
+      joint3: {trajectory: 0.10, goal: 0.05}
+      joint4: {trajectory: 0.10, goal: 0.05}
+      joint5: {trajectory: 0.10, goal: 0.05}
+      joint6: {trajectory: 0.10, goal: 0.05}
+
+    # -------------------------
+    # Gains (start point)
+    # Increase joint2/joint3 if it still sags under gravity.
+    # -------------------------
+    gains:
+      joint1: {p: 200.0, i: 0.0, d: 10.0, i_clamp: 0.0}
+      joint2: {p: 600.0, i: 0.0, d: 25.0, i_clamp: 0.0}
+      joint3: {p: 600.0, i: 0.0, d: 25.0, i_clamp: 0.0}
+      joint4: {p: 180.0, i: 0.0, d: 10.0, i_clamp: 0.0}
+      joint5: {p: 180.0, i: 0.0, d: 10.0, i_clamp: 0.0}
+      joint6: {p: 120.0, i: 0.0, d: 6.0,  i_clamp: 0.0}
