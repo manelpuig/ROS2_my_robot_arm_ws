@@ -12,8 +12,8 @@ from launch_ros.parameter_descriptions import ParameterValue
 def generate_launch_description():
     pkg_share = get_package_share_directory("my_arm_description")
 
-    declare_arm = DeclareLaunchArgument(
-        "arm",
+    declare_model = DeclareLaunchArgument(
+        "model",
         default_value="my_arm_puma.urdf.xacro",
         description="URDF/Xacro file inside my_arm_description/urdf"
     )
@@ -24,7 +24,7 @@ def generate_launch_description():
         description="Use simulation time"
     )
 
-    arm_file = LaunchConfiguration("arm")
+    arm_file = LaunchConfiguration("model")
     use_sim_time = LaunchConfiguration("use_sim_time")
 
     xacro_file = PathJoinSubstitution([pkg_share, "urdf", arm_file])
@@ -67,7 +67,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        declare_arm,
+        declare_model,
         declare_use_sim_time,
         rsp,
         jsp_gui,

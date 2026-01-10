@@ -157,8 +157,13 @@
   <xacro:wrist_link name="link6" mass="$(arg m_wrist)" mat="blue"/>
 
   <!-- =========================
-       Joints (6-DOF)
+       Joints (6-DOF) - PUMA-like zero pose and rotation sense
+       Zero pose intent:
+         - Arm extended forward (+X), not vertical (+Z)
+         - q2,q3 positive => lift upward
        ========================= -->
+
+  <!-- joint1: base yaw about +Z (standard) -->
   <joint name="joint1" type="revolute">
     <parent link="base_link"/>
     <child link="link1"/>
@@ -168,25 +173,40 @@
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
 
+  <!--
+    joint2: shoulder pitch
+    We rotate the joint frame so that link2 (a cylinder along its local +Z) points along +X at q2=0.
+    Rot_y(-90deg): local +Z becomes parent +X.
+    Also flip axis to make q2>0 lift (+X toward +Z).
+  -->
   <joint name="joint2" type="revolute">
     <parent link="link1"/>
     <child link="link2"/>
-    <origin xyz="0 0 ${L1}" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
+    <origin xyz="0 0 ${L1}" rpy="0 -1.57079632679 0"/>
+    <axis xyz="0 -1 0"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
 
+  <!--
+    joint3: elbow pitch
+    Keep the same sign convention as joint2: q3>0 lifts elbow upward.
+    No additional frame rotation needed: link2 frame already “forward”.
+  -->
   <joint name="joint3" type="revolute">
     <parent link="link2"/>
     <child link="link3"/>
     <origin xyz="0 0 ${L2}" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
+    <axis xyz="0 -1 0"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
 
-  <!-- Spherical wrist: all wrist joint origins coincide at the end of link3 -->
+  <!--
+    Spherical wrist at end of link3.
+    At q=0, forearm axis is link3 local +Z (which is “forward” in the world).
+    joint4: roll about forearm axis => use (0 0 1)
+  -->
   <joint name="joint4" type="revolute">
     <parent link="link3"/>
     <child link="link4"/>
@@ -196,15 +216,17 @@
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
 
+  <!-- joint5: wrist pitch (q5>0 “pitches up” with our sign choice) -->
   <joint name="joint5" type="revolute">
     <parent link="link4"/>
     <child link="link5"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
+    <axis xyz="0 -1 0"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
 
+  <!-- joint6: wrist roll (tool roll) -->
   <joint name="joint6" type="revolute">
     <parent link="link5"/>
     <child link="link6"/>

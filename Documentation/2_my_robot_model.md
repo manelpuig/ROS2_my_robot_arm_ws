@@ -1,21 +1,36 @@
 # Robot model
 
-Once you have created a model you can:
-- Review the arm model on RVIZ2:
+Once you have created different robot-arm models:
+- generic 6DoF robot-arm
+- PUMA robot-arm
+- UR5e robot-arm
+
+We can see the different models in RVIZ2 tool:
+- generic 6DoF robot-arm:
 ````shell
-ros2 launch my_arm_description display.launch.py use_sim_time:=true arm:=my_arm_puma.urdf.xacro
+ros2 launch my_arm_description display.launch.py use_sim_time:=true model:=my_arm.urdf.xacro
 ````
 ![](./Images/my_arm_rviz.png)
+- PUMA robot-arm:
+````shell
+ros2 launch my_arm_description display.launch.py use_sim_time:=true model:=my_arm_puma.urdf.xacro
+````
+![](./Images/my_arm_puma_rviz.png)
+- UR5e robot-arm:
+````shell
+ros2 launch my_arm_description display.launch.py use_sim_time:=true model:=my_arm_ur5e.urdf.xacro
+````
+![](./Images/my_arm_ur5e_rviz.png)
 
 - Bringup the robot arm in Gazebo sim:
 ````shell
-ros2 launch my_arm_gz gz_sim.launch.py use_sim_time:=true
+ros2 launch my_arm_gz gz_sim.launch.py use_sim_time:=true model:=my_arm_puma.urdf.xacro
 ````
 ![](./Images/my_arm_gz.png)
 
 - Enviar joint-trajectory
 ````shell
-ros2 launch my_arm_control send_joint_trajectory.launch.py use_sim_time:=true
+ros2 launch my_arm_control send_joint_trajectory.launch.py use_sim_time:=true model:=my_arm_puma.urdf.xacro
 ````
 
 # Move to pose
@@ -30,9 +45,9 @@ This node receives a desired **tool pose** (position + orientation) expressed in
 
 - Launch the simulation environment
 ````shell
-ros2 launch my_arm_gz gz_sim.launch.py
+ros2 launch my_arm_gz gz_sim.launch.py use_sim_time:=true model:=my_arm_puma.urdf.xacro
 ````
-- Launch the `move_tool_to_pose` node:
+- Launch the `send_pose_trajectory` node:
 ````shell
-ros2 launch my_arm_control move_tool_to_pose.launch.py use_sim_time:=true
+ros2 launch my_arm_control send_pose_trajectory.launch.py use_sim_time:=true robot_model:=puma
 ````
