@@ -8,17 +8,17 @@ Once you have created different robot-arm models:
 We can see the different models in RVIZ2 tool:
 - generic 6DoF robot-arm:
 ````shell
-ros2 launch my_arm_description display.launch.py use_sim_time:=true model:=my_arm.urdf.xacro
+ros2 launch my_arm_description display.launch.py use_sim_time:=false model:=my_arm.urdf.xacro
 ````
 ![](./Images/my_arm_rviz.png)
 - PUMA robot-arm:
 ````shell
-ros2 launch my_arm_description display.launch.py use_sim_time:=true model:=my_arm_puma.urdf.xacro
+ros2 launch my_arm_description display.launch.py use_sim_time:=false model:=my_arm_puma.urdf.xacro
 ````
 ![](./Images/my_arm_puma_rviz.png)
 - UR5e robot-arm:
 ````shell
-ros2 launch my_arm_description display.launch.py use_sim_time:=true model:=my_arm_ur5e.urdf.xacro
+ros2 launch my_arm_description display.launch.py use_sim_time:=false model:=my_arm_ur5e.urdf.xacro
 ````
 ![](./Images/my_arm_ur5e_rviz.png)
 

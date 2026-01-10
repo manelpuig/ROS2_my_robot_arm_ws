@@ -9,8 +9,8 @@
        d1=0.1625, a2=-0.425, a3=-0.3922, d4=0.1333, d5=0.0997, d6=0.0996  [m]
        ========================= -->
   <xacro:arg name="d1" default="0.1625"/>
-  <xacro:arg name="a2" default="-0.425"/>
-  <xacro:arg name="a3" default="-0.3922"/>
+  <xacro:arg name="a2" default="0.425"/>
+  <xacro:arg name="a3" default="0.3922"/>
   <xacro:arg name="d4" default="0.1333"/>
   <xacro:arg name="d5" default="0.0997"/>
   <xacro:arg name="d6" default="0.0996"/>
@@ -39,8 +39,8 @@
   <xacro:property name="d4" value="$(arg d4)"/>
   <xacro:property name="d5" value="$(arg d5)"/>
   <xacro:property name="d6" value="$(arg d6)"/>
-  <xacro:property name="a2_abs" value="${abs(a2)}"/>
-  <xacro:property name="a3_abs" value="${abs(a3)}"/>
+  <xacro:property name="a2_abs" value="$(arg a2)"/>
+  <xacro:property name="a3_abs" value="$(arg a3)"/>
   <xacro:property name="r"  value="$(arg r_link)"/>
 
   <!-- =========================
