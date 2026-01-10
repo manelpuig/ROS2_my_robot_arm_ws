@@ -7,9 +7,9 @@
        Parameters
        ========================= -->
   <!-- Link lengths (meters) -->
-  <xacro:arg name="L1" default="0.12"/>
-  <xacro:arg name="L2" default="0.12"/>
-  <xacro:arg name="L3" default="0.12"/>
+  <xacro:arg name="L1" default="0.4"/>
+  <xacro:arg name="L2" default="0.4318"/>
+  <xacro:arg name="L3" default="0.43208"/>
 
   <!-- Spherical wrist: set these to 0 -->
   <xacro:arg name="L4" default="0.0"/>
@@ -20,7 +20,7 @@
   <xacro:arg name="r_link" default="0.01"/>
   <xacro:arg name="base_x" default="0.10"/>
   <xacro:arg name="base_y" default="0.10"/>
-  <xacro:arg name="base_z" default="0.04"/>
+  <xacro:arg name="base_z" default="0.02"/>
 
   <!-- Masses (kg) -->
   <xacro:arg name="m_base" default="1.0"/>
@@ -32,6 +32,7 @@
   <xacro:arg name="joint_effort" default="5.0"/>
 
   <!-- Convenience properties -->
+  <xacro:property name="base_z" value="$(arg base_z)"/>
   <xacro:property name="L1" value="$(arg L1)"/>
   <xacro:property name="L2" value="$(arg L2)"/>
   <xacro:property name="L3" value="$(arg L3)"/>
@@ -88,7 +89,7 @@
   <joint name="world_to_base" type="fixed">
     <parent link="world"/>
     <child link="base_link"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0 0 ${base_z}" rpy="0 0 0"/>
   </joint>
 
   <link name="base_link">
@@ -167,7 +168,7 @@
   <joint name="joint1" type="revolute">
     <parent link="base_link"/>
     <child link="link1"/>
-    <origin xyz="0 0 $(arg base_z)" rpy="0 0 0"/>
+    <origin xyz="0 0 ${L1}" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
@@ -182,7 +183,7 @@
   <joint name="joint2" type="revolute">
     <parent link="link1"/>
     <child link="link2"/>
-    <origin xyz="0 0 ${L1}" rpy="0 1.57079632679 0"/>
+    <origin xyz="0 0 0" rpy="0 1.57079632679 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
@@ -196,7 +197,7 @@
   <joint name="joint3" type="revolute">
     <parent link="link2"/>
     <child link="link3"/>
-    <origin xyz="0 0 ${L2}" rpy="0 57079632679 0"/>
+    <origin xyz="0 0 ${L2}" rpy="0 1.57079632679 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
