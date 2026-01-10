@@ -31,7 +31,7 @@ ros2 launch my_arm_gz gz_sim.launch.py use_sim_time:=true model:=my_arm_puma.urd
 
 - Enviar joint-trajectory
 ````shell
-ros2 launch my_arm_control send_joint_trajectory.launch.py use_sim_time:=true model:=my_arm_puma.urdf.xacro
+ros2 launch my_arm_control send_joint_trajectory.launch.py use_sim_time:=true
 ````
 
 # Move to pose
