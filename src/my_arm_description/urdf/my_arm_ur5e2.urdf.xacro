@@ -15,8 +15,8 @@
        d6=0.0996
   -->
   <xacro:arg name="d1" default="0.1625"/>
-  <xacro:arg name="a2" default="-0.425"/>
-  <xacro:arg name="a3" default="-0.3922"/>
+  <xacro:arg name="a2" default="0.425"/>
+  <xacro:arg name="a3" default="0.3922"/>
   <xacro:arg name="d4" default="0.1333"/>
   <xacro:arg name="d5" default="0.0997"/>
   <xacro:arg name="d6" default="0.0996"/>
@@ -143,8 +143,8 @@
 
   <!-- Physical links (simple geometry) -->
   <xacro:cyl_z name="link1" length="${d1}" mat="grey" mass="$(arg m_link)"/>
-  <xacro:cyl_x name="link2" length="${abs(a2)}" mat="grey" mass="$(arg m_link)"/>
-  <xacro:cyl_x name="link3" length="${abs(a3)}" mat="grey" mass="$(arg m_link)"/>
+  <xacro:cyl_x name="link2" length="${a2}" mat="grey" mass="$(arg m_link)"/>
+  <xacro:cyl_x name="link3" length="${a3}" mat="grey" mass="$(arg m_link)"/>
   <xacro:cyl_z name="link4" length="${d4}" mat="blue" mass="$(arg m_link)"/>
   <xacro:cyl_z name="link5" length="${d5}" mat="blue" mass="$(arg m_link)"/>
   <xacro:cyl_z name="link6" length="${d6}" mat="blue" mass="$(arg m_link)"/>
