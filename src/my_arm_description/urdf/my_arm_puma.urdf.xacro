@@ -10,6 +10,7 @@
   <xacro:arg name="L1" default="0.4"/>
   <xacro:arg name="L2" default="0.4318"/>
   <xacro:arg name="L3" default="0.43208"/>
+  <xacro:arg name="d3" default="0.1397"/>
 
   <!-- Spherical wrist: set these to 0 -->
   <xacro:arg name="L4" default="0.0"/>
@@ -17,7 +18,7 @@
   <xacro:arg name="L6" default="0.0"/>
 
   <!-- Sizes -->
-  <xacro:arg name="r_link" default="0.01"/>
+  <xacro:arg name="r_link" default="0.03"/>
   <xacro:arg name="base_x" default="0.10"/>
   <xacro:arg name="base_y" default="0.10"/>
   <xacro:arg name="base_z" default="0.02"/>
@@ -36,6 +37,7 @@
   <xacro:property name="L2" value="$(arg L2)"/>
   <xacro:property name="L3" value="$(arg L3)"/>
   <xacro:property name="r"  value="$(arg r_link)"/>
+  <xacro:property name="d3" value="$(arg d3)"/>
 
   <!-- Wrist visualization radius (small spheres) -->
   <xacro:property name="r_wrist" value="${0.5 * $(arg r_link)}"/>
@@ -78,6 +80,7 @@
   <material name="grey"><color rgba="0.6 0.6 0.6 1.0"/></material>
   <material name="dark"><color rgba="0.2 0.2 0.2 1.0"/></material>
   <material name="blue"><color rgba="0.2 0.3 0.8 1.0"/></material>
+  <material name="pale_blue"><color rgba="0.70 0.82 1.00 1.0"/></material>
 
   <!-- =========================
        Links
@@ -128,9 +131,9 @@
     </link>
   </xacro:macro>
 
-  <xacro:arm_link name="link1" length="${L1}" mass="$(arg m_link)" mat="grey"/>
-  <xacro:arm_link name="link2" length="${L2}" mass="$(arg m_link)" mat="grey"/>
-  <xacro:arm_link name="link3" length="${L3}" mass="$(arg m_link)" mat="grey"/>
+  <xacro:arm_link name="link1" length="${L1}" mass="$(arg m_link)" mat="pale_blue"/>
+  <xacro:arm_link name="link2" length="${L2}" mass="$(arg m_link)" mat="pale_blue"/>
+  <xacro:arm_link name="link3" length="${L3}" mass="$(arg m_link)" mat="pale_blue"/>
 
   <!-- Wrist links: zero-length, just small spheres to visualize axes -->
   <xacro:macro name="wrist_link" params="name mass mat">
@@ -182,7 +185,7 @@
   <joint name="joint2" type="revolute">
     <parent link="link1"/>
     <child link="link2"/>
-    <origin xyz="0 0 ${L1}" rpy="0 1.57079632679 0"/>
+    <origin xyz="0 ${d3} ${L1}" rpy="0 1.57079632679 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
@@ -284,6 +287,18 @@
             filename="libign_ros2_control-system.so">
       <parameters>$(arg ros2_control_params)</parameters>
     </plugin>
+  </gazebo>
+
+  <gazebo reference="link1">
+    <material>Gazebo/LightBlue</material>
+  </gazebo>
+
+  <gazebo reference="link2">
+    <material>Gazebo/LightBlue</material>
+  </gazebo>
+
+  <gazebo reference="link3">
+    <material>Gazebo/LightBlue</material>
   </gazebo>
 
 </robot>
