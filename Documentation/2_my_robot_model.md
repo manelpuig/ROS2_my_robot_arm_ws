@@ -28,12 +28,14 @@ ros2 launch my_arm_gz gz_sim.launch.py use_sim_time:=true model:=my_arm_puma.urd
 ````
 
 ![](./Images/my_arm_puma2_gz.png)
+![](./Images/my_arm_ur5e_gz.png)
 
 - Enviar joint-trajectory
 ````shell
 ros2 launch my_arm_control send_joint_trajectory.launch.py use_sim_time:=true
 ````
-
+![](./Images/send_joints_puma.png)
+![](./Images/send_joints_ur5e.png)
 # Move to pose
 
 This node receives a desired **tool pose** (position + orientation) expressed in the **base frame** and computes a 6-joint configuration using **numerical inverse kinematics (IK)**.
