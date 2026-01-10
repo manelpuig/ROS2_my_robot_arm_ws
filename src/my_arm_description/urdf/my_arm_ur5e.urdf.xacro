@@ -150,9 +150,9 @@
   <!-- link4: wrist1 offset d4 in Z -->
   <xacro:cyl_link name="link4" length="${d4}"     axis="z" mass="$(arg m_link)" mat="blue"/>
   <!-- link5: wrist2 offset d5 in Z -->
-  <xacro:cyl_link name="link5" length="${d5}"     axis="z" mass="$(arg m_link)" mat="blue"/>
+  <xacro:cyl_link name="link5" length="${d5}"     axis="y" mass="$(arg m_link)" mat="blue"/>
   <!-- link6: wrist3 to flange d6 in Z -->
-  <xacro:cyl_link name="link6" length="${d6}"     axis="z" mass="$(arg m_link)" mat="blue"/>
+  <xacro:cyl_link name="link6" length="${d6}"     axis="y" mass="$(arg m_link)" mat="blue"/>
 
   <!-- Tool / flange marker -->
   <link name="tool0">
@@ -193,8 +193,8 @@
   <joint name="joint2" type="revolute">
     <parent link="link1"/>
     <child link="link2"/>
-    <origin xyz="0 0 ${d1}" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
+    <origin xyz="0 0 ${d1}" rpy="0 -3.14 0"/>
+    <axis xyz="0 -1 0"/>
     <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
@@ -204,7 +204,7 @@
     <parent link="link2"/>
     <child link="link3"/>
     <origin xyz="${a2_abs} 0 0" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
+    <axis xyz="0 -1 0"/>
     <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
@@ -214,7 +214,7 @@
     <parent link="link3"/>
     <child link="link4"/>
     <origin xyz="${a3_abs} 0 0" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
+    <axis xyz="0 -1 0"/>
     <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
@@ -233,8 +233,8 @@
   <joint name="joint6" type="revolute">
     <parent link="link5"/>
     <child link="link6"/>
-    <origin xyz="0 0 ${d5}" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
+    <origin xyz="0 0 ${d5}" rpy="0 -1.57 0"/>
+    <axis xyz="0 -1 0"/>
     <limit lower="-6.28318530718" upper="6.28318530718" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
