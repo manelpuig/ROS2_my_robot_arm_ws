@@ -34,8 +34,8 @@ setup(
             "serial_bridge = my_arm_control.serial_bridge:main",
             "joint_state_estimator = my_arm_control.joint_state_estimator:main",
             "send_joint_trajectory_exe = my_arm_control.send_joint_trajectory:main",
-            "send_pose_trajectory_exe = my_arm_control.send_pose_trajectory:main",
-            "send_pose_trajectory_ew_exe = my_arm_control.send_pose_trajectory_ew:main",
+            "send_pose_trajectory_ur5e_exe = my_arm_control.send_pose_trajectory_ur5e:main",
+            "send_pose_trajectory_puma_exe = my_arm_control.send_pose_trajectory_puma:main",
         ],
     },
 )

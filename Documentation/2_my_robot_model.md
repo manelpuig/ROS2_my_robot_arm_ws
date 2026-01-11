@@ -38,6 +38,25 @@ ros2 launch my_arm_control send_joint_trajectory.launch.py use_sim_time:=true
 ![](./Images/send_joints_ur5e.png)
 # Move to pose
 
+We consider 2 cases:
+- Analitical solution when we have spherical wrist (PUMA)
+- Numerical solution when we have not spherical wrist (UR5e)
+
+## Analitical solution
+
+- Launch the simulation environment
+````shell
+ros2 launch my_arm_gz gz_sim.launch.py use_sim_time:=true model:=my_arm_puma.urdf.xacro
+````
+- Launch the `send_pose_trajectory` node:
+````shell
+ros2 launch my_arm_control send_pose_trajectory.launch.py use_sim_time:=true robot_model:=puma
+````
+![](./Images/send_pose_puma.png)
+
+
+## Numerical solution
+
 This node receives a desired **tool pose** (position + orientation) expressed in the **base frame** and computes a 6-joint configuration using **numerical inverse kinematics (IK)**.
 
 ## What it does
