@@ -6,6 +6,7 @@
   <!-- =========================
        Parameters
        ========================= -->
+  <!-- Link lengths (meters) -->
   <xacro:arg name="L1" default="0.4"/>
   <xacro:arg name="L2" default="0.4318"/>
   <xacro:arg name="L3" default="0.43208"/>
@@ -25,22 +26,24 @@
   <!-- Masses (kg) -->
   <xacro:arg name="m_base" default="1.0"/>
   <xacro:arg name="m_link" default="0.3"/>
-  <xacro:arg name="m_wrist" default="0.05"/>
+  <xacro:arg name="m_wrist" default="0.05"/>  <!-- small non-zero mass for wrist links -->
 
   <!-- Joint limits -->
   <xacro:arg name="joint_vel" default="2.0"/>
   <xacro:arg name="joint_effort" default="5.0"/>
 
+  <!-- Convenience properties -->
   <xacro:property name="L1" value="$(arg L1)"/>
   <xacro:property name="L2" value="$(arg L2)"/>
   <xacro:property name="L3" value="$(arg L3)"/>
-  <xacro:property name="d3" value="$(arg d3)"/>
   <xacro:property name="r"  value="$(arg r_link)"/>
+  <xacro:property name="d3" value="$(arg d3)"/>
 
+  <!-- Wrist visualization radius (small spheres) -->
   <xacro:property name="r_wrist" value="${0.5 * $(arg r_link)}"/>
 
   <!-- =========================
-       Inertial macros
+       Inertial macros (Gazebo-safe)
        ========================= -->
   <xacro:macro name="inertial_box" params="mass x y z">
     <inertial>
@@ -60,18 +63,11 @@
     </inertial>
   </xacro:macro>
 
-  <xacro:macro name="inertial_cylinder_x" params="mass radius length">
-    <inertial>
-      <mass value="${mass}"/>
-      <inertia ixx="${mass*(radius*radius)/2.0}" ixy="0.0" ixz="0.0"
-               iyy="${mass*(3*radius*radius + length*length)/12.0}" iyz="0.0"
-               izz="${mass*(3*radius*radius + length*length)/12.0}"/>
-    </inertial>
-  </xacro:macro>
-
+  <!-- Simple sphere inertia (non-zero, stable) -->
   <xacro:macro name="inertial_sphere" params="mass radius">
     <inertial>
       <mass value="${mass}"/>
+      <!-- I = 2/5 m r^2 -->
       <inertia ixx="${0.4*mass*radius*radius}" ixy="0.0" ixz="0.0"
                iyy="${0.4*mass*radius*radius}" iyz="0.0"
                izz="${0.4*mass*radius*radius}"/>
@@ -81,13 +77,15 @@
   <!-- =========================
        Materials
        ========================= -->
+  <material name="grey"><color rgba="0.6 0.6 0.6 1.0"/></material>
   <material name="dark"><color rgba="0.2 0.2 0.2 1.0"/></material>
-  <material name="pale_blue"><color rgba="0.70 0.82 1.00 1.0"/></material>
   <material name="blue"><color rgba="0.2 0.3 0.8 1.0"/></material>
+  <material name="pale_blue"><color rgba="0.70 0.82 1.00 1.0"/></material>
 
   <!-- =========================
-       World + base
+       Links
        ========================= -->
+  <!-- Dummy root link (no inertia) to keep KDL happy -->
   <link name="world"/>
 
   <joint name="world_to_base" type="fixed">
@@ -99,73 +97,59 @@
   <link name="base_link">
     <visual>
       <origin xyz="0 0 ${$(arg base_z)/2.0}" rpy="0 0 0"/>
-      <geometry><box size="$(arg base_x) $(arg base_y) $(arg base_z)"/></geometry>
+      <geometry>
+        <box size="$(arg base_x) $(arg base_y) $(arg base_z)"/>
+      </geometry>
       <material name="dark"/>
     </visual>
     <collision>
       <origin xyz="0 0 ${$(arg base_z)/2.0}" rpy="0 0 0"/>
-      <geometry><box size="$(arg base_x) $(arg base_y) $(arg base_z)"/></geometry>
+      <geometry>
+        <box size="$(arg base_x) $(arg base_y) $(arg base_z)"/>
+      </geometry>
     </collision>
     <xacro:inertial_box mass="$(arg m_base)" x="$(arg base_x)" y="$(arg base_y)" z="$(arg base_z)"/>
   </link>
 
-  <!-- =========================
-       Links (KINEMATIC frames are simple; visuals oriented for nice zero pose)
-       ========================= -->
+  <!-- Main arm links as cylinders aligned along +Z -->
+  <xacro:macro name="arm_link" params="name length mass mat">
+    <link name="${name}">
+      <visual>
+        <origin xyz="0 0 ${length/2.0}" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${r}" length="${length}"/>
+        </geometry>
+        <material name="${mat}"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${length/2.0}" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${r}" length="${length}"/>
+        </geometry>
+      </collision>
+      <xacro:inertial_cylinder_z mass="${mass}" radius="${r}" length="${length}"/>
+    </link>
+  </xacro:macro>
 
-  <!-- link1: cylinder along +Z -->
-  <link name="link1">
-    <visual>
-      <origin xyz="0 0 ${L1/2.0}" rpy="0 0 0"/>
-      <geometry><cylinder radius="${r}" length="${L1}"/></geometry>
-      <material name="pale_blue"/>
-    </visual>
-    <collision>
-      <origin xyz="0 0 ${L1/2.0}" rpy="0 0 0"/>
-      <geometry><cylinder radius="${r}" length="${L1}"/></geometry>
-    </collision>
-    <xacro:inertial_cylinder_z mass="$(arg m_link)" radius="${r}" length="${L1}"/>
-  </link>
+  <xacro:arm_link name="link1" length="${L1}" mass="$(arg m_link)" mat="pale_blue"/>
+  <xacro:arm_link name="link2" length="${L2}" mass="$(arg m_link)" mat="pale_blue"/>
+  <xacro:arm_link name="link3" length="${L3}" mass="$(arg m_link)" mat="pale_blue"/>
 
-  <!-- link2: visually along +X, but link frame is NOT rotated (kinematics stay simple) -->
-  <link name="link2">
-    <visual>
-      <origin xyz="${L2/2.0} 0 0" rpy="0 1.57079632679 0"/>
-      <geometry><cylinder radius="${r}" length="${L2}"/></geometry>
-      <material name="pale_blue"/>
-    </visual>
-    <collision>
-      <origin xyz="${L2/2.0} 0 0" rpy="0 1.57079632679 0"/>
-      <geometry><cylinder radius="${r}" length="${L2}"/></geometry>
-    </collision>
-    <xacro:inertial_cylinder_x mass="$(arg m_link)" radius="${r}" length="${L2}"/>
-  </link>
-
-  <!-- link3: visually along +X -->
-  <link name="link3">
-    <visual>
-      <origin xyz="${L3/2.0} 0 0" rpy="0 1.57079632679 0"/>
-      <geometry><cylinder radius="${r}" length="${L3}"/></geometry>
-      <material name="pale_blue"/>
-    </visual>
-    <collision>
-      <origin xyz="${L3/2.0} 0 0" rpy="0 1.57079632679 0"/>
-      <geometry><cylinder radius="${r}" length="${L3}"/></geometry>
-    </collision>
-    <xacro:inertial_cylinder_x mass="$(arg m_link)" radius="${r}" length="${L3}"/>
-  </link>
-
-  <!-- Wrist links: spheres -->
+  <!-- Wrist links: zero-length, just small spheres to visualize axes -->
   <xacro:macro name="wrist_link" params="name mass mat">
     <link name="${name}">
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <geometry><sphere radius="${r_wrist}"/></geometry>
+        <geometry>
+          <sphere radius="${r_wrist}"/>
+        </geometry>
         <material name="${mat}"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <geometry><sphere radius="${r_wrist}"/></geometry>
+        <geometry>
+          <sphere radius="${r_wrist}"/>
+        </geometry>
       </collision>
       <xacro:inertial_sphere mass="${mass}" radius="${r_wrist}"/>
     </link>
@@ -176,10 +160,13 @@
   <xacro:wrist_link name="link6" mass="$(arg m_wrist)" mat="blue"/>
 
   <!-- =========================
-       Joints (KINEMATICALLY SIMPLE)
+       Joints (6-DOF) - PUMA-like zero pose and rotation sense
+       Zero pose intent:
+         - Arm extended forward (+X), not vertical (+Z)
+         - q2,q3 positive => lift upward
        ========================= -->
 
-  <!-- joint1: base yaw about +Z -->
+  <!-- joint1: base yaw about +Z (standard) -->
   <joint name="joint1" type="revolute">
     <parent link="base_link"/>
     <child link="link1"/>
@@ -189,39 +176,50 @@
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
 
-  <!-- joint2: shoulder pitch about +Y, located at top of link1 with lateral offset d3 -->
-  <!-- IMPORTANT: rpy = 0 0 0 to keep kinematics consistent with analytic IK -->
+  <!--
+    joint2: shoulder pitch
+    We rotate the joint frame so that link2 (a cylinder along its local +Z) points along +X at q2=0.
+    Rot_y(-90deg): local +Z becomes parent +X.
+    Also flip axis to make q2>0 lift (+X toward +Z).
+  -->
   <joint name="joint2" type="revolute">
     <parent link="link1"/>
     <child link="link2"/>
-    <origin xyz="0 ${d3} ${L1}" rpy="0 0 0"/>
+    <origin xyz="0 ${d3} ${L1}" rpy="0 1.57079632679 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
 
-  <!-- joint3: elbow pitch about +Y at end of link2 (along +X) -->
-  <!-- IMPORTANT: origin along +X because link2 is modeled as translating along +X in kinematics -->
+  <!--
+    joint3: elbow pitch
+    Keep the same sign convention as joint2: q3>0 lifts elbow upward.
+    No additional frame rotation needed: link2 frame already “forward”.
+  -->
   <joint name="joint3" type="revolute">
     <parent link="link2"/>
     <child link="link3"/>
-    <origin xyz="${L2} 0 0" rpy="0 0 0"/>
+    <origin xyz="0 0 ${L2}" rpy="0 -1.57079632679 0"/>
     <axis xyz="0 1 0"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
 
-  <!-- joint4: wrist roll about +Z at end of link3 -->
+  <!--
+    Spherical wrist at end of link3.
+    At q=0, forearm axis is link3 local +Z (which is “forward” in the world).
+    joint4: roll about forearm axis => use (0 0 1)
+  -->
   <joint name="joint4" type="revolute">
     <parent link="link3"/>
     <child link="link4"/>
-    <origin xyz="${L3} 0 0" rpy="0 0 0"/>
+    <origin xyz="0 0 ${L3}" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
 
-  <!-- joint5: wrist pitch about +Y -->
+  <!-- joint5: wrist pitch (q5>0 “pitches up” with our sign choice) -->
   <joint name="joint5" type="revolute">
     <parent link="link4"/>
     <child link="link5"/>
@@ -231,7 +229,7 @@
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
 
-  <!-- joint6: wrist roll about +Z -->
+  <!-- joint6: wrist roll (tool roll) -->
   <joint name="joint6" type="revolute">
     <parent link="link5"/>
     <child link="link6"/>
@@ -240,6 +238,8 @@
     <limit lower="-3.14159" upper="3.14159" effort="$(arg joint_effort)" velocity="$(arg joint_vel)"/>
     <dynamics damping="0.2" friction="0.0"/>
   </joint>
+
+  <!-- NOTE: tool0 REMOVED (no tool / no TCP) -->
 
   <!-- =========================
        ros2_control (gz_ros2_control)
@@ -281,6 +281,7 @@
     </joint>
   </ros2_control>
 
+  <!-- Gazebo plugin hook -->
   <gazebo>
     <plugin name="ign_ros2_control::IgnitionROS2ControlPlugin"
             filename="libign_ros2_control-system.so">
@@ -288,8 +289,16 @@
     </plugin>
   </gazebo>
 
-  <gazebo reference="link1"><material>Gazebo/Blue</material></gazebo>
-  <gazebo reference="link2"><material>Gazebo/Blue</material></gazebo>
-  <gazebo reference="link3"><material>Gazebo/Blue</material></gazebo>
+  <gazebo reference="link1">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <gazebo reference="link2">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <gazebo reference="link3">
+    <material>Gazebo/Blue</material>
+  </gazebo>
 
 </robot>

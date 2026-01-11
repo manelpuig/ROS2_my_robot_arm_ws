@@ -24,15 +24,14 @@ arm_controller:
     # Stability / holding behavior
     # -------------------------
     constraints:
-      stopped_velocity_tolerance: 0.05
-      goal_time: 0.5
-      joint1: {trajectory: 0.10, goal: 0.05}
-      joint2: {trajectory: 0.10, goal: 0.05}
-      joint3: {trajectory: 0.10, goal: 0.05}
-      joint4: {trajectory: 0.10, goal: 0.05}
-      joint5: {trajectory: 0.10, goal: 0.05}
-      joint6: {trajectory: 0.10, goal: 0.05}
-
+      stopped_velocity_tolerance: 0.10
+      goal_time: 2.0
+      joint1: {trajectory: 0.30, goal: 0.20}
+      joint2: {trajectory: 0.30, goal: 0.20}
+      joint3: {trajectory: 0.30, goal: 0.20}
+      joint4: {trajectory: 0.30, goal: 0.20}
+      joint5: {trajectory: 0.30, goal: 0.20}
+      joint6: {trajectory: 0.30, goal: 0.20}
     # -------------------------
     # Gains (start point)
     # Increase joint2/joint3 if it still sags under gravity.
