@@ -5,7 +5,7 @@ send_pose_trajectory:
 
     # Target pose in BASE_LINK frame
     target_xyz: [0.5, 0.00, 0.5]
-    target_rpy_deg: [0.0, 160.0, 0.0]   # Degrees
+    target_rpy_deg: [0.0, 135.0, 0.0]   # Degrees
 
     # Geometry (match xacro defaults)
     L1: 0.4
@@ -14,7 +14,7 @@ send_pose_trajectory:
     d3: 0.1397 #d3: 0.0
     
     elbow: up
-    wrist: flip
+    wrist: noflip #flip/noflip
 
     #Njoint_lower_deg: [-160, -180, -45, -150, -100, -266]
     #joint_upper_deg: [ 160,  70,  220,  150,  100,  266]
