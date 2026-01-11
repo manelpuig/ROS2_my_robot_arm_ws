@@ -5,7 +5,7 @@ send_pose_trajectory:
 
     # Target pose in WORLD frame (same frame you use to command)
     target_xyz: [0.4, 0.00, 0.6]
-    target_rpy: [0.0, 1.57, 0.0]
+    target_rpy: [0.0, 90.0, 0.0] # Degrees
 
     # Geometry (match xacro defaults)
     base_z: 0.02

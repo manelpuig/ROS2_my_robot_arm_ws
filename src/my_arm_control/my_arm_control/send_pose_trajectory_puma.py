@@ -5,8 +5,12 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
+
 from control_msgs.action import FollowJointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
+
+from tf2_ros import Buffer, TransformListener
+from tf_transformations import euler_from_quaternion
 
 
 # -----------------------------
@@ -40,42 +44,42 @@ def wrap_to_pi(a):
 def wrap_vec(q):
     return np.array([wrap_to_pi(float(x)) for x in q], dtype=float)
 
+def deg2rad(v):
+    return np.deg2rad(np.array(v, dtype=float))
+
+def rad2deg(v):
+    return np.rad2deg(np.array(v, dtype=float))
+
 
 def zyz_from_R_two(R):
     """
-    Decompose R = Rz(a) * Ry(b) * Rz(c), assuming joint4=Z, joint5=Y, joint6=Z.
-
-    Returns TWO equivalent solutions (noflip, flip) when not singular.
-    This gives you the classic "wrist flip / no-flip" branch.
+    Decompose R = Rz(a) * Ry(b) * Rz(c), matching joint4=Z, joint5=Y, joint6=Z.
+    Returns two equivalent solutions: (noflip, flip).
     """
     r33 = float(R[2, 2])
     r33 = max(-1.0, min(1.0, r33))
     b = math.acos(r33)  # b in [0, pi]
 
     sb = math.sin(b)
-
-    # singular when sin(b) ~ 0
     if abs(sb) < 1e-9:
-        # Infinite solutions: we pick a simple one and duplicate it
         a = math.atan2(float(R[1, 0]), float(R[0, 0]))
         c = 0.0
         sol = (a, b, c)
         return sol, sol
 
-    # One standard solution
     a1 = math.atan2(float(R[1, 2]), float(R[0, 2]))       # atan2(r23, r13)
     c1 = math.atan2(float(R[2, 1]), -float(R[2, 0]))      # atan2(r32, -r31)
     sol1 = (a1, b, c1)
 
-    # The "flip" equivalent (valid for ZYZ; b can be negative if joints allow it)
+    # "flip" equivalent (ZYZ)
     sol2 = (a1 + math.pi, -b, c1 + math.pi)
 
     return sol1, sol2
 
 
-class MoveToolToPoseAnalyticSimple(Node):
+class MoveToolToPoseAnalyticPumaSimple(Node):
     """
-    Analytic IK for your academic simplified arm:
+    Analytic IK for simplified PUMA-like academic arm (spherical wrist):
       joint1: Z
       joint2: Y
       joint3: Y
@@ -83,15 +87,17 @@ class MoveToolToPoseAnalyticSimple(Node):
       joint5: Y
       joint6: Z
 
-    Assumptions matching your xacro:
-      - Spherical wrist: L4=L5=L6=0 (wrist center == tool point)
-      - No TCP/tool offset
-      - Shoulder offset d3 in +Y at joint2 origin
-      - Base is shifted in world by base_z (world_to_base)
+    Requested modifications:
+      - elbow up/down swapped (to match your URDF visual convention)
+      - target_xyz is expressed in base_link frame
+      - target_rpy is provided in degrees (target_rpy_deg)
+      - logs output joint solutions in degrees
+      - after execution, reads TF (from robot_state_publisher fed by joint_state_broadcaster)
+        and logs the final pose base_link -> tip_link
 
-    Selection:
-      - elbow: "up" | "down"  (no auto, no seed)
-      - wrist: "noflip" | "flip"
+    Notes:
+      - You must have joint_state_broadcaster running AND robot_state_publisher publishing TF.
+      - tip_link default is "link6" (last link in your xacro).
     """
 
     def __init__(self):
@@ -102,19 +108,18 @@ class MoveToolToPoseAnalyticSimple(Node):
         self.declare_parameter("joint_names",
                                ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"])
 
-        # Target pose (world frame)
-        self.declare_parameter("target_xyz", [0.25, 0.00, 0.25])
-        self.declare_parameter("target_rpy", [0.0, 1.57, 0.0])
+        # Target pose in BASE_LINK frame
+        self.declare_parameter("target_xyz", [0.25, 0.00, 0.45])  # meters, base_link
+        self.declare_parameter("target_rpy_deg", [0.0, 90.0, 0.0])  # degrees, base_link
 
-        # Geometry (must match xacro)
-        self.declare_parameter("base_z", 0.02)
+        # Geometry (match xacro)
         self.declare_parameter("L1", 0.4)
         self.declare_parameter("L2", 0.4318)
         self.declare_parameter("L3", 0.43208)
         self.declare_parameter("d3", 0.1397)
 
-        # Explicit solution selection
-        self.declare_parameter("elbow", "down")     # "up" | "down"
+        # Explicit branch selection
+        self.declare_parameter("elbow", "down")     # "up" | "down" (already swapped)
         self.declare_parameter("wrist", "noflip")   # "noflip" | "flip"
 
         self.declare_parameter("solve_orientation", True)
@@ -123,36 +128,42 @@ class MoveToolToPoseAnalyticSimple(Node):
         self.declare_parameter("duration_sec", 2.0)
         self.declare_parameter("wait_result", True)
 
+        # TF verification
+        self.declare_parameter("base_link", "base_link")
+        self.declare_parameter("tip_link", "link6")
+        self.declare_parameter("tf_timeout_sec", 2.0)
+
         controller = self.get_parameter("controller_name").value
         self._action_name = f"/{controller}/follow_joint_trajectory"
         self._client = ActionClient(self, FollowJointTrajectory, self._action_name)
 
-    # Simplified orientation decoupling
-    # With your model: R03 = Rz(q1) * Ry(q2+q3)
+        # TF listener for verification (requires robot_state_publisher publishing TF)
+        self._tf_buffer = Buffer()
+        self._tf_listener = TransformListener(self._tf_buffer, self)
+
+    # With simplified model: R03 = Rz(q1) * Ry(q2+q3)
     def R03(self, q1, q2, q3):
         return Rz(q1) @ Ry(q2 + q3)
 
-    def ikine(self, target_xyz, target_rpy):
-        bz = float(self.get_parameter("base_z").value)
+    def ikine(self, target_xyz, target_rpy_deg):
         L1 = float(self.get_parameter("L1").value)
         L2 = float(self.get_parameter("L2").value)
         L3 = float(self.get_parameter("L3").value)
         d3 = float(self.get_parameter("d3").value)
 
+        # Target is in base_link frame (no world/base conversion)
         x, y, z = float(target_xyz[0]), float(target_xyz[1]), float(target_xyz[2])
 
         # --- Solve q1 with shoulder offset d3 ---
-        # In XY plane, shoulder is at radius d3 from z-axis. Let r be target radius.
         r = math.sqrt(x*x + y*y)
         if r < abs(d3) - 1e-9:
             return False, None, []
 
-        # Choose the common "PUMA-like" branch for q1 (one of possible shoulder branches)
         phi = math.atan2(y, x)
         gamma = math.atan2(d3, math.sqrt(max(0.0, r*r - d3*d3)))
         q1 = phi - gamma
 
-        # Planar distance from shoulder to target in the arm plane
+        # Planar coordinates from shoulder to target
         x_plane = math.sqrt(max(0.0, r*r - d3*d3))
         z_plane = z - L1
 
@@ -164,18 +175,18 @@ class MoveToolToPoseAnalyticSimple(Node):
         D = max(-1.0, min(1.0, D))
         s = math.sqrt(max(0.0, 1.0 - D*D))
 
-        q3_down = math.atan2(+s, D)
-        q3_up   = math.atan2(-s, D)
+        q3_down_math = math.atan2(+s, D)
+        q3_up_math   = math.atan2(-s, D)
 
         def solve_q2(q3):
-            # Standard 2-link planar IK in (x_plane, z_plane)
             return math.atan2(z_plane, x_plane) - math.atan2(L3*math.sin(q3), L2 + L3*math.cos(q3))
 
-        q2_down = solve_q2(q3_down)
-        q2_up   = solve_q2(q3_up)
+        q2_down_math = solve_q2(q3_down_math)
+        q2_up_math   = solve_q2(q3_up_math)
 
         solve_ori = bool(self.get_parameter("solve_orientation").value)
-        Rd = rpy_to_R(float(target_rpy[0]), float(target_rpy[1]), float(target_rpy[2]))
+        rpy = deg2rad(target_rpy_deg)
+        Rd = rpy_to_R(float(rpy[0]), float(rpy[1]), float(rpy[2]))
 
         def make_solution(elbow_name, q2, q3, wrist_name):
             if not solve_ori:
@@ -184,7 +195,6 @@ class MoveToolToPoseAnalyticSimple(Node):
                 R03 = self.R03(q1, q2, q3)
                 R36 = R03.T @ Rd
                 (a1, b1, c1), (a2, b2, c2) = zyz_from_R_two(R36)
-
                 if wrist_name == "noflip":
                     q4, q5, q6 = a1, b1, c1
                 else:
@@ -193,11 +203,13 @@ class MoveToolToPoseAnalyticSimple(Node):
             q = wrap_vec([q1, q2, q3, q4, q5, q6])
             return (elbow_name, wrist_name, q)
 
+        # --- IMPORTANT: swap elbow labels to match your URDF visual convention ---
+        # Mathematical "down" is labeled as "up", and mathematical "up" as "down".
         candidates = [
-            make_solution("down", q2_down, q3_down, "noflip"),
-            make_solution("down", q2_down, q3_down, "flip"),
-            make_solution("up",   q2_up,   q3_up,   "noflip"),
-            make_solution("up",   q2_up,   q3_up,   "flip"),
+            make_solution("up",   q2_down_math, q3_down_math, "noflip"),
+            make_solution("up",   q2_down_math, q3_down_math, "flip"),
+            make_solution("down", q2_up_math,   q3_up_math,   "noflip"),
+            make_solution("down", q2_up_math,   q3_up_math,   "flip"),
         ]
 
         elbow = str(self.get_parameter("elbow").value).lower()
@@ -206,12 +218,10 @@ class MoveToolToPoseAnalyticSimple(Node):
         if elbow not in ("up", "down"):
             self.get_logger().error("Parameter 'elbow' must be 'up' or 'down'.")
             return False, None, candidates
-
         if wrist not in ("noflip", "flip"):
             self.get_logger().error("Parameter 'wrist' must be 'noflip' or 'flip'.")
             return False, None, candidates
 
-        # Select exactly the requested branch (no auto)
         for e, w, q in candidates:
             if e == elbow and w == wrist:
                 return True, q, candidates
@@ -237,7 +247,9 @@ class MoveToolToPoseAnalyticSimple(Node):
             self.get_logger().error("Action server not available.")
             return 2
 
-        self.get_logger().info(f"Sending q={pt.positions}")
+        self.get_logger().info(f"Sending q (rad)={pt.positions}")
+        self.get_logger().info(f"Sending q (deg)={rad2deg(np.array(pt.positions)).tolist()}")
+
         fut = self._client.send_goal_async(goal)
         rclpy.spin_until_future_complete(self, fut)
         gh = fut.result()
@@ -258,34 +270,73 @@ class MoveToolToPoseAnalyticSimple(Node):
         self.get_logger().info(f"Result status={res.status}, error_code={res.result.error_code}")
         return 0 if res.result.error_code == 0 else 5
 
+    def log_final_pose_from_tf(self):
+        base_link = str(self.get_parameter("base_link").value)
+        tip_link = str(self.get_parameter("tip_link").value)
+        tf_timeout = float(self.get_parameter("tf_timeout_sec").value)
+
+        # Attempt to read TF base_link -> tip_link
+        try:
+            tf = self._tf_buffer.lookup_transform(
+                base_link,
+                tip_link,
+                rclpy.time.Time(),
+                timeout=rclpy.duration.Duration(seconds=tf_timeout),
+            )
+        except Exception as e:
+            self.get_logger().warn(
+                f"Could not lookup TF {base_link} -> {tip_link}. "
+                f"Make sure joint_state_broadcaster + robot_state_publisher are running. "
+                f"Error: {e}"
+            )
+            return
+
+        t = tf.transform.translation
+        q = tf.transform.rotation
+
+        # Convert quaternion to RPY (rad) then to degrees
+        roll, pitch, yaw = euler_from_quaternion([q.x, q.y, q.z, q.w])
+        rpy_deg = rad2deg(np.array([roll, pitch, yaw]))
+
+        self.get_logger().info(
+            f"TF verify pose {base_link} -> {tip_link}: "
+            f"xyz=[{t.x:.4f}, {t.y:.4f}, {t.z:.4f}] m, "
+            f"rpy=[{rpy_deg[0]:.2f}, {rpy_deg[1]:.2f}, {rpy_deg[2]:.2f}] deg"
+        )
+
     def run_once(self):
         xyz = np.array(self.get_parameter("target_xyz").value, dtype=float)
-        rpy = np.array(self.get_parameter("target_rpy").value, dtype=float)
+        rpy_deg = np.array(self.get_parameter("target_rpy_deg").value, dtype=float)
 
-        ok, q_sol, cands = self.ikine(xyz, rpy)
+        ok, q_sol, cands = self.ikine(xyz, rpy_deg)
         if not ok or q_sol is None:
             self.get_logger().error("Analytic IK failed (unreachable target or invalid params).")
-            self.get_logger().info("Candidate solutions (if any):")
+            self.get_logger().info("Candidate solutions (deg):")
             for e, w, q in cands:
-                self.get_logger().info(f"  elbow={e}, wrist={w}: {q.tolist()}")
+                self.get_logger().info(f"  elbow={e}, wrist={w}: {rad2deg(q).tolist()}")
             return 10
 
-        self.get_logger().info("Analytic IK candidate solutions:")
+        self.get_logger().info("Analytic IK candidate solutions (deg):")
         for e, w, q in cands:
-            self.get_logger().info(f"  elbow={e}, wrist={w}: {q.tolist()}")
+            self.get_logger().info(f"  elbow={e}, wrist={w}: {rad2deg(q).tolist()}")
 
         self.get_logger().info(
             f"Selected: elbow={self.get_parameter('elbow').value}, "
             f"wrist={self.get_parameter('wrist').value}, "
-            f"q={q_sol.tolist()}"
+            f"q_deg={rad2deg(q_sol).tolist()}"
         )
 
-        return self.send_trajectory(q_sol)
+        rc = self.send_trajectory(q_sol)
+
+        # Verification: log final link pose from TF after execution
+        self.log_final_pose_from_tf()
+
+        return rc
 
 
 def main():
     rclpy.init()
-    node = MoveToolToPoseAnalyticSimple()
+    node = MoveToolToPoseAnalyticPumaSimple()
     try:
         rc = node.run_once()
     finally:
