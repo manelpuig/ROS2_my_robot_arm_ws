@@ -4,7 +4,7 @@ send_pose_trajectory:
     joint_names: [joint1, joint2, joint3, joint4, joint5, joint6]
 
     # Target pose in WORLD frame (same frame you use to command)
-    target_xyz: [0.4, 0.00, 0.5]
+    target_xyz: [0.4, 0.00, 0.6]
     target_rpy: [0.0, 1.57, 0.0]
 
     # Geometry (match xacro defaults)
@@ -15,7 +15,7 @@ send_pose_trajectory:
     d3: 0.1397
 
     # Explicit branch selection (NO auto)
-    elbow: up        # up | down
+    elbow: down        # up | down
     wrist: noflip      # noflip | flip
 
     solve_orientation: true
