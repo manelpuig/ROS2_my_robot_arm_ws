@@ -16,6 +16,9 @@ send_pose_trajectory:
     elbow: up
     wrist: noflip
 
+    joint_lower_deg: [-160, -180, -45, -150, -100, -266]
+    joint_upper_deg: [ 160,  70,  220,  150,  100,  266]
+
     solve_orientation: true #true/false
     duration_sec: 10.0
     wait_result: true
