@@ -4,8 +4,8 @@ send_pose_trajectory:
     joint_names: [joint1, joint2, joint3, joint4, joint5, joint6]
 
     # Target pose in BASE_LINK frame
-    target_xyz: [0.4, 0.00, 0.5]
-    target_rpy_deg: [0.0, 180.0, 0.0]   # Degrees
+    target_xyz: [0.45, 0.00, 0.5]
+    target_rpy_deg: [0.0, -90.0, 0.0]   # Degrees
 
     # Geometry (match xacro defaults)
     L1: 0.4
@@ -16,8 +16,10 @@ send_pose_trajectory:
     elbow: up
     wrist: noflip
 
-    joint_lower_deg: [-160, -180, -45, -150, -100, -266]
-    joint_upper_deg: [ 160,  70,  220,  150,  100,  266]
+    #Njoint_lower_deg: [-160, -180, -45, -150, -100, -266]
+    #joint_upper_deg: [ 160,  70,  220,  150,  100,  266]
+    joint_lower_deg: [-160, -180, -220, -150, -100, -266]
+    joint_upper_deg: [ 160,  70,  240,  150,  100,  266]
 
     solve_orientation: true #true/false
     duration_sec: 10.0
