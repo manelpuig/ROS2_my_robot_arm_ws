@@ -141,15 +141,15 @@
     <xacro:inertial_cylinder_x mass="$(arg m_link)" radius="${r}" length="${L2}"/>
   </link>
 
-  <!-- link3: visually along +X -->
+  <!-- link3: visually along +Z -->
   <link name="link3">
     <visual>
-      <origin xyz="${L3/2.0} 0 0" rpy="0 1.57079632679 0"/>
+      <origin xyz="${L3/2.0} 0 0" rpy="0 0 0"/>
       <geometry><cylinder radius="${r}" length="${L3}"/></geometry>
       <material name="pale_blue"/>
     </visual>
     <collision>
-      <origin xyz="${L3/2.0} 0 0" rpy="0 1.57079632679 0"/>
+      <origin xyz="${L3/2.0} 0 0" rpy="0 0 0"/>
       <geometry><cylinder radius="${r}" length="${L3}"/></geometry>
     </collision>
     <xacro:inertial_cylinder_x mass="$(arg m_link)" radius="${r}" length="${L3}"/>
