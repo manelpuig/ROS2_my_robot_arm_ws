@@ -139,12 +139,7 @@ class MoveToolToPoseAnalyticSimple(Node):
         L3 = float(self.get_parameter("L3").value)
         d3 = float(self.get_parameter("d3").value)
 
-        xw, yw, zw = float(target_xyz[0]), float(target_xyz[1]), float(target_xyz[2])
-
-        # Convert world target to base_link frame (base_link is at z=base_z in world)
-        x = xw
-        y = yw
-        z = zw - bz
+        x, y, z = float(target_xyz[0]), float(target_xyz[1]), float(target_xyz[2])
 
         # --- Solve q1 with shoulder offset d3 ---
         # In XY plane, shoulder is at radius d3 from z-axis. Let r be target radius.
