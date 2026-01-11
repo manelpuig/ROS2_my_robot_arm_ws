@@ -5,7 +5,7 @@ send_pose_trajectory:
 
     # Target pose in BASE_LINK frame
     target_xyz: [0.5, 0.00, 0.5]
-    target_rpy_deg: [0.0, 180.0, 0.0]   # Degrees
+    target_rpy_deg: [0.0, 160.0, 0.0]   # Degrees
 
     # Geometry (match xacro defaults)
     L1: 0.4
