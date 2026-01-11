@@ -35,7 +35,9 @@ setup(
             "joint_state_estimator = my_arm_control.joint_state_estimator:main",
             "send_joint_trajectory_exe = my_arm_control.send_joint_trajectory:main",
             "send_pose_trajectory_ur5e_exe = my_arm_control.send_pose_trajectory_ur5e:main",
-            "send_pose_trajectory_puma_exe = my_arm_control.send_pose_trajectory_puma:main",
+            'send_pose_trajectory_puma_simple_exe = my_arm_control.send_pose_trajectory_puma_simple:main',
+            'send_pose_trajectory_puma_limits_exe = my_arm_control.send_pose_trajectory_puma_limits:main',
+
         ],
     },
 )

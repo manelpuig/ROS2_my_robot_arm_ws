@@ -15,7 +15,7 @@ def _make_nodes(context, *args, **kwargs):
     robot_model = LaunchConfiguration("robot_model").perform(context).strip().lower()
 
     if robot_model == "puma":
-        exe = "send_pose_trajectory_puma_exe"
+        exe = "send_pose_trajectory_puma_limits_exe"
         params_file = os.path.join(pkg_share, "config", "pose_puma.yaml")
         msg = "PUMA robot arm has Spherical-wrist"
 
@@ -26,11 +26,11 @@ def _make_nodes(context, *args, **kwargs):
 
     else:
         # Safe fallback
-        exe = "send_pose_trajectory_exe"
-        params_file = os.path.join(pkg_share, "config", "pose_ur5e.yaml")
+        exe = "send_pose_trajectory_puma_simple_exe"
+        params_file = os.path.join(pkg_share, "config", "pose_puma.yaml")
         msg = (
             f"Unknown robot_model='{robot_model}'. "
-            "Defaulting to UR5e behavior (not spherical-wrist)."
+            "Defaulting to puma_simple behavior (spherical-wrist)."
         )
 
     node = Node(

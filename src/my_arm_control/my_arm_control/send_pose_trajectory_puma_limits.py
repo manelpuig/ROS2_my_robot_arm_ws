@@ -12,9 +12,6 @@ import tf2_ros
 from tf_transformations import euler_from_quaternion
 
 
-# -----------------------------
-# Basic rotations
-# -----------------------------
 def Rz(a):
     ca, sa = math.cos(a), math.sin(a)
     return np.array([[ca, -sa, 0.0],
@@ -34,7 +31,6 @@ def Rx(a):
                      [0.0,  sa,  ca]], dtype=float)
 
 def rpy_to_R(roll, pitch, yaw):
-    # Z-Y-X convention: R = Rz(yaw) * Ry(pitch) * Rx(roll)
     return Rz(yaw) @ Ry(pitch) @ Rx(roll)
 
 def wrap_to_pi(a):
@@ -50,74 +46,57 @@ def deg2rad_vec(q):
     return [float(x * math.pi / 180.0) for x in q]
 
 def zyz_from_R(R):
-    """
-    Solve R = Rz(a) * Ry(b) * Rz(c)  -> returns (a,b,c).
-    joint4=Z, joint5=Y, joint6=Z
-    """
     r33 = float(R[2, 2])
     r33 = max(-1.0, min(1.0, r33))
     b = math.acos(r33)
 
-    # singular when sin(b) ~ 0
     if abs(math.sin(b)) < 1e-9:
         a = math.atan2(float(R[1, 0]), float(R[0, 0]))
         c = 0.0
         return a, b, c
 
-    a = math.atan2(float(R[1, 2]), float(R[0, 2]))       # atan2(r23, r13)
-    c = math.atan2(float(R[2, 1]), -float(R[2, 0]))      # atan2(r32, -r31)
+    a = math.atan2(float(R[1, 2]), float(R[0, 2]))
+    c = math.atan2(float(R[2, 1]), -float(R[2, 0]))
     return a, b, c
 
 
-def within_limits_rad(q, q_min, q_max, eps=1e-9):
-    for i in range(len(q)):
-        if q[i] < q_min[i] - eps or q[i] > q_max[i] + eps:
-            return False
-    return True
+def ensure_limits_vectors(node: Node):
+    lo = node.get_parameter("joint_lower_deg").value
+    hi = node.get_parameter("joint_upper_deg").value
+    if not isinstance(lo, (list, tuple)) or not isinstance(hi, (list, tuple)):
+        raise RuntimeError("joint_lower_deg / joint_upper_deg must be lists of 6 numbers.")
+    if len(lo) != 6 or len(hi) != 6:
+        raise RuntimeError(f"joint_lower_deg/upper_deg must have length 6, got {len(lo)} and {len(hi)}.")
+    for i in range(6):
+        if float(lo[i]) > float(hi[i]):
+            raise RuntimeError(f"Invalid limits at joint {i+1}: lower>upper ({lo[i]}>{hi[i]}).")
+    return np.array(deg2rad_vec(lo), dtype=float), np.array(deg2rad_vec(hi), dtype=float)
 
 
-def wrap_to_limits_rad(q, q_min, q_max):
+def normalize_near_pi(q):
+    return np.array([wrap_to_pi(float(x)) for x in q], dtype=float)
+
+
+def project_to_limits_with_2pi(q, q_min, q_max, max_k=1):
     """
-    Try to move each joint by +/- 2*pi (equivalent angles) to fall inside [min,max].
-    If impossible for any joint, returns (False, original_q).
+    Only allow k in {-1,0,1} (max_k=1) to avoid inflated angles like 216 deg.
     """
-    q_adj = np.array(q, dtype=float)
-    for i in range(len(q_adj)):
-        # First wrap to [-pi,pi] for stability
-        qi = wrap_to_pi(q_adj[i])
-
-        # If already inside, keep
-        if q_min[i] <= qi <= q_max[i]:
-            q_adj[i] = qi
-            continue
-
-        # Try adding/subtracting 2*pi several times (in case limits span > 2*pi or are shifted)
-        ok = False
-        for k in range(-2, 3):
-            cand = qi + 2.0 * math.pi * k
+    q_out = np.array(q, dtype=float)
+    for i in range(len(q_out)):
+        base = float(q_out[i])
+        best = None
+        for k in range(-max_k, max_k + 1):
+            cand = base + 2.0 * math.pi * k
             if q_min[i] <= cand <= q_max[i]:
-                q_adj[i] = cand
-                ok = True
+                best = cand
                 break
-
-        if not ok:
+        if best is None:
             return False, np.array(q, dtype=float)
-
-    return True, q_adj
+        q_out[i] = best
+    return True, q_out
 
 
 class SendPoseTrajectoryPuma(Node):
-    """
-    Analytic IK for simplified PUMA-like kinematics (your URDF):
-      joint1: Z
-      joint2: Y  at (0, d3, L1)
-      joint3: Y  at (L2, 0, 0)  -> link2 along +X at q2=0
-      joint4: Z  at (0, 0, L3)  -> link3 along +Z at q3=0
-      joint5: Y
-      joint6: Z
-      spherical wrist: L4=L5=L6=0
-    """
-
     def __init__(self):
         super().__init__("send_pose_trajectory")
 
@@ -125,31 +104,25 @@ class SendPoseTrajectoryPuma(Node):
         self.declare_parameter("joint_names",
                                ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"])
 
-        # Target pose (base_link frame)
         self.declare_parameter("target_xyz", [0.35, 0.0, 0.55])
         self.declare_parameter("target_rpy_deg", [0.0, 0.0, 0.0])
 
-        # Geometry
         self.declare_parameter("L1", 0.4)
         self.declare_parameter("L2", 0.4318)
         self.declare_parameter("L3", 0.43208)
         self.declare_parameter("d3", 0.1397)
 
-        # Branch selection (explicit, no seed/auto)
-        self.declare_parameter("elbow", "up")        # up | down
-        self.declare_parameter("wrist", "noflip")    # noflip | flip
+        self.declare_parameter("elbow", "up")
+        self.declare_parameter("wrist", "noflip")
         self.declare_parameter("solve_orientation", False)
 
-        # Joint limits (DEG) - set from YAML
-        # If you don't set them, defaults are wide.
+        # REQUIRED
         self.declare_parameter("joint_lower_deg", [-180, -180, -180, -180, -180, -180])
         self.declare_parameter("joint_upper_deg", [ 180,  180,  180,  180,  180,  180])
 
-        # Trajectory send
         self.declare_parameter("duration_sec", 8.0)
         self.declare_parameter("wait_result", True)
 
-        # TF verify
         self.declare_parameter("base_link", "base_link")
         self.declare_parameter("tip_link", "link6")
         self.declare_parameter("tf_timeout_sec", 2.0)
@@ -170,45 +143,37 @@ class SendPoseTrajectoryPuma(Node):
         L3 = float(self.get_parameter("L3").value)
         d3 = float(self.get_parameter("d3").value)
 
-        # limits (rad)
-        q_min = deg2rad_vec(self.get_parameter("joint_lower_deg").value)
-        q_max = deg2rad_vec(self.get_parameter("joint_upper_deg").value)
-        q_min = np.array(q_min, dtype=float)
-        q_max = np.array(q_max, dtype=float)
+        try:
+            q_min, q_max = ensure_limits_vectors(self)
+        except Exception as e:
+            return False, None, f"Invalid joint limits parameters: {e}"
 
         x, y, z = float(target_xyz[0]), float(target_xyz[1]), float(target_xyz[2])
 
-        # -------- q1 (shoulder-left, consistent with d3 in +Y) --------
+        # shoulder-left
         r = math.sqrt(x*x + y*y)
         if r < abs(d3) + 1e-9:
             return False, None, "Target too close to base axis for given d3."
-
         r_xy = math.sqrt(max(0.0, r*r - d3*d3))
         phi = math.atan2(y, x)
         gamma = math.atan2(d3, r_xy)
-
-        # shoulder-left: q1 = phi - gamma
         q1 = phi - gamma
 
-        # plane coordinates
         x_p = r_xy
         z_p = z - L1
 
-        # -------- solve q2,q3 for: L2 in X, L3 in Z --------
         R = math.sqrt(x_p*x_p + z_p*z_p)
         if R < 1e-9:
             return False, None, "Degenerate target (R ~ 0)."
 
         gamma2 = math.atan2(x_p, z_p)
         C = (x_p*x_p + z_p*z_p + L3*L3 - L2*L2) / (2.0 * L3 * R)
-
         if C < -1.0 - 1e-6 or C > 1.0 + 1e-6:
             return False, None, "Unreachable target."
 
         C = max(-1.0, min(1.0, C))
         delta = math.acos(C)
 
-        # two phi candidates
         phi_a = gamma2 + delta
         phi_b = gamma2 - delta
 
@@ -222,23 +187,20 @@ class SendPoseTrajectoryPuma(Node):
         q2_a, q3_a = solve_q2q3_from_phi(phi_a)
         q2_b, q3_b = solve_q2q3_from_phi(phi_b)
 
-        # choose elbow explicitly, but later we will enforce limits
         elbow_mode = str(self.get_parameter("elbow").value).lower()
         if elbow_mode == "up":
             q2, q3 = q2_a, q3_a
         elif elbow_mode == "down":
             q2, q3 = q2_b, q3_b
         else:
-            return False, None, "Invalid elbow parameter (use up/down)."
+            return False, None, "Invalid elbow (use up/down)."
 
-        # -------- orientation (optional) --------
         solve_ori = bool(self.get_parameter("solve_orientation").value)
         if not solve_ori:
-            q4, q5, q6 = 0.0, 0.0, 0.0
+            q4 = q5 = q6 = 0.0
         else:
             roll, pitch, yaw = deg2rad_vec(list(target_rpy_deg))
             Rd = rpy_to_R(roll, pitch, yaw)
-
             R03 = self.R03(q1, q2, q3)
             R36 = R03.T @ Rd
             q4, q5, q6 = zyz_from_R(R36)
@@ -251,13 +213,14 @@ class SendPoseTrajectoryPuma(Node):
                 q5 = -q5
                 q6 = q6 + math.pi
             else:
-                return False, None, "Invalid wrist parameter (use noflip/flip)."
+                return False, None, "Invalid wrist (use noflip/flip)."
 
-        q = wrap_vec([q1, q2, q3, q4, q5, q6])
+        # 1) normalize to [-pi, pi] (prevents inflated angles)
+        q = normalize_near_pi([q1, q2, q3, q4, q5, q6])
 
-        # -------- enforce limits by 2*pi wrapping --------
-        ok, q_adj = wrap_to_limits_rad(q, q_min, q_max)
-        if not ok or not within_limits_rad(q_adj, q_min, q_max):
+        # 2) only allow +/- 2*pi once
+        ok, q_adj = project_to_limits_with_2pi(q, q_min, q_max, max_k=1)
+        if not ok:
             msg = (
                 "IK solution violates joint limits. "
                 f"q_deg={rad2deg_vec(q)} "
@@ -325,7 +288,7 @@ class SendPoseTrajectoryPuma(Node):
 
         tr = t.transform.translation
         q = t.transform.rotation
-        rpy = euler_from_quaternion([q.x, q.y, q.z, q.w])  # rad
+        rpy = euler_from_quaternion([q.x, q.y, q.z, q.w])
         rpy_deg = [x * 180.0 / math.pi for x in rpy]
 
         self.get_logger().info(
