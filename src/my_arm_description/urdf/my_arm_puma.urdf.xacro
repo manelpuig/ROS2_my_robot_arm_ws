@@ -9,7 +9,8 @@
   <xacro:arg name="L1" default="0.4"/>
   <xacro:arg name="L2" default="0.4318"/>
   <xacro:arg name="L3" default="0.43208"/>
-  <xacro:arg name="d3" default="0.1397"/>
+  <xacro:arg name="d3" default="0.0"/>
+  <!--<xacro:arg name="d3" default="0.1397"/> -->
 
   <!-- Spherical wrist: set these to 0 -->
   <xacro:arg name="L4" default="0.0"/>
